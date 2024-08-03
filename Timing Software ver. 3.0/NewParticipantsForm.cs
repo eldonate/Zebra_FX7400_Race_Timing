@@ -114,7 +114,18 @@ namespace RaceManager
             if (ValidateForm())
             {
                 int age = CalculateAge(dtpBirthday.Value, raceDate);
-                AddParticipant(age);
+
+                DataRowView selectedRace = (DataRowView)cmbRaces.SelectedItem;
+                DataRowView selectedDistance = (DataRowView)cmbDistances.SelectedItem;
+
+                string raceName = selectedRace["name"].ToString();
+                string distanceName = selectedDistance["name"].ToString();
+
+                // Get the category name using the correct parameters
+                string categoryName = GetCategory(age, raceName, distanceName);
+
+                // Pass the category name to AddParticipant
+                AddParticipant(age, raceName, distanceName, categoryName);
             }
         }
 
@@ -144,14 +155,16 @@ namespace RaceManager
             return age;
         }
 
-        private void AddParticipant(int age)
+        private void AddParticipant(int age, string raceName, string distanceName, string categoryName)
         {
+            DataRowView selectedDistance = (DataRowView)cmbDistances.SelectedItem;
+
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
                 MySqlCommand command = new MySqlCommand(
-                    "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id) " +
-                    "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId)", connection);
+                    "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id, category) " +
+                    "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId, @Category)", connection);
 
                 command.Parameters.AddWithValue("@Rfid", txtRfid.Text);
                 command.Parameters.AddWithValue("@Bib", int.Parse(txtBib.Text));
@@ -160,21 +173,19 @@ namespace RaceManager
                 command.Parameters.AddWithValue("@Gender", cmbGender.SelectedItem.ToString());
                 command.Parameters.AddWithValue("@Birthday", dtpBirthday.Value);
                 command.Parameters.AddWithValue("@Age", age);
-
-                DataRowView selectedRace = (DataRowView)cmbRaces.SelectedItem;
-                command.Parameters.AddWithValue("@RaceName", selectedRace["name"].ToString());
+                command.Parameters.AddWithValue("@RaceName", raceName);
+                command.Parameters.AddWithValue("@DistanceName", distanceName);
                 command.Parameters.AddWithValue("@RaceDate", raceDate);
-
-                DataRowView selectedDistance = (DataRowView)cmbDistances.SelectedItem;
-                command.Parameters.AddWithValue("@DistanceName", selectedDistance["name"].ToString());
                 command.Parameters.AddWithValue("@DistanceLaps", GetDistanceLaps((int)selectedDistance["id"]));
                 command.Parameters.AddWithValue("@DistanceIntervals", GetDistanceIntervals((int)selectedDistance["id"]));
                 command.Parameters.AddWithValue("@DistanceId", (int)selectedDistance["id"]);
+                command.Parameters.AddWithValue("@Category", categoryName);
 
                 command.ExecuteNonQuery();
                 MessageBox.Show("Participant added successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
+
 
         private int GetDistanceLaps(int distanceId)
         {
@@ -239,10 +250,13 @@ namespace RaceManager
 
                     DataRowView selectedRace = (DataRowView)cmbRaces.SelectedItem;
                     DataRowView selectedDistance = (DataRowView)cmbDistances.SelectedItem;
+                    string raceName = selectedRace["name"].ToString();
+                    string distanceName = selectedDistance["name"].ToString();
+                    string categoryName = GetCategory(age, raceName, distanceName);
 
                     MySqlCommand command = new MySqlCommand(
-                        "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id) " +
-                        "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId)", connection);
+                        "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id, category) " +
+                        "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId, @Category)", connection);
 
                     command.Parameters.AddWithValue("@Rfid", rfid);
                     command.Parameters.AddWithValue("@Bib", bib);
@@ -251,12 +265,13 @@ namespace RaceManager
                     command.Parameters.AddWithValue("@Gender", gender);
                     command.Parameters.AddWithValue("@Birthday", birthday);
                     command.Parameters.AddWithValue("@Age", age);
-                    command.Parameters.AddWithValue("@RaceName", selectedRace["name"].ToString());
+                    command.Parameters.AddWithValue("@RaceName", raceName);
                     command.Parameters.AddWithValue("@RaceDate", raceDate);
-                    command.Parameters.AddWithValue("@DistanceName", selectedDistance["name"].ToString());
+                    command.Parameters.AddWithValue("@DistanceName", distanceName);
                     command.Parameters.AddWithValue("@DistanceLaps", GetDistanceLaps((int)selectedDistance["id"]));
                     command.Parameters.AddWithValue("@DistanceIntervals", GetDistanceIntervals((int)selectedDistance["id"]));
                     command.Parameters.AddWithValue("@DistanceId", (int)selectedDistance["id"]);
+                    command.Parameters.AddWithValue("@Category", categoryName);
 
                     try
                     {
@@ -268,6 +283,46 @@ namespace RaceManager
                     }
                 }
                 MessageBox.Show("Import completed.", "Import", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+
+
+        private string GetCategory(int age, string raceName, string distanceName)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // Get race ID
+                int raceId;
+                MySqlCommand getRaceIdCommand = new MySqlCommand("SELECT id FROM races WHERE name = @RaceName", connection);
+                getRaceIdCommand.Parameters.AddWithValue("@RaceName", raceName);
+                object raceIdResult = getRaceIdCommand.ExecuteScalar();
+                if (raceIdResult == null)
+                {
+                    throw new Exception($"Race with name '{raceName}' not found.");
+                }
+                raceId = Convert.ToInt32(raceIdResult);
+
+                // Get distance ID
+                int distanceId;
+                MySqlCommand getDistanceIdCommand = new MySqlCommand("SELECT id FROM distances WHERE name = @DistanceName AND race_id = @RaceId", connection);
+                getDistanceIdCommand.Parameters.AddWithValue("@DistanceName", distanceName);
+                getDistanceIdCommand.Parameters.AddWithValue("@RaceId", raceId);
+                object distanceIdResult = getDistanceIdCommand.ExecuteScalar();
+                if (distanceIdResult == null)
+                {
+                    throw new Exception($"Distance with name '{distanceName}' and race ID '{raceId}' not found.");
+                }
+                distanceId = Convert.ToInt32(distanceIdResult);
+
+                // Get category
+                MySqlCommand getCategoryCommand = new MySqlCommand("SELECT name FROM categories WHERE distance_id = @DistanceId AND start_age <= @Age AND end_age >= @Age", connection);
+                getCategoryCommand.Parameters.AddWithValue("@DistanceId", distanceId);
+                getCategoryCommand.Parameters.AddWithValue("@Age", age);
+                object categoryResult = getCategoryCommand.ExecuteScalar();
+                return categoryResult != null ? categoryResult.ToString() : "Unknown";
             }
         }
     }

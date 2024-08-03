@@ -130,6 +130,10 @@ namespace RaceManager
                     var raceName = reader["race_name"].ToString();
                     var distanceName = reader["distance_name"].ToString();
                     var raceDate = (DateTime)reader["race_date"];
+                    var category = reader["category"] != DBNull.Value ? reader["category"].ToString() : "Unknown"; // Get the category from the runners table
+
+                    // Debug output to verify category retrieval
+                    Console.WriteLine($"RFID: {rfid}, Category: {category}");
 
                     // Check if logging for specific distance is enabled and if the RFID belongs to the selected distance
                     if (chkLogSpecificDistance.Checked && cmbDistances.SelectedValue != null)
@@ -202,13 +206,14 @@ namespace RaceManager
                         insertCmd.Parameters.AddWithValue("@race_date", raceDate);
                         insertCmd.Parameters.AddWithValue("@distance_laps", distanceLaps);
                         insertCmd.Parameters.AddWithValue("@distance_intervals", distanceIntervals);
-                        insertCmd.Parameters.AddWithValue("@category", DBNull.Value); // Assuming category is not available
+                        insertCmd.Parameters.AddWithValue("@category", category); // Use the retrieved category
                         insertCmd.Parameters.AddWithValue("@elapsed_time", elapsedTime);
                         insertCmd.ExecuteNonQuery();
                     }
                 }
             }
         }
+
 
 
 
