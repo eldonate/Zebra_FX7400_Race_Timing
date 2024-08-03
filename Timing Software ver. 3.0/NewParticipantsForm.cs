@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
@@ -10,7 +9,7 @@ namespace RaceManager
     public partial class NewParticipantsForm : Form
     {
         private string connectionString;
-        private DateTime raceDate; // Declare raceDate here
+        private DateTime raceDate;
 
         public NewParticipantsForm()
         {
@@ -105,7 +104,9 @@ namespace RaceManager
 
         private void cmbDistances_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // You can implement any additional logic if needed when a distance is selected
+            // Handle any logic needed when a distance is selected
+            // This could involve updating related fields or calculations
+            MessageBox.Show("Selected Distance Changed", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void btnAddParticipant_Click(object sender, EventArgs e)
@@ -194,6 +195,79 @@ namespace RaceManager
                 MySqlCommand command = new MySqlCommand("SELECT intervals FROM distances WHERE id = @DistanceId", connection);
                 command.Parameters.AddWithValue("@DistanceId", distanceId);
                 return (int)command.ExecuteScalar();
+            }
+        }
+
+        // Import participants from a file
+        private void btnImportParticipants_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string filePath = openFileDialog.FileName;
+                ImportParticipantsFromFile(filePath);
+            }
+        }
+
+        private void ImportParticipantsFromFile(string filePath)
+        {
+            string[] lines = File.ReadAllLines(filePath);
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                foreach (string line in lines)
+                {
+                    var parts = line.Split(',');
+
+                    if (parts.Length < 6)
+                    {
+                        MessageBox.Show($"Invalid format in line: {line}", "Import Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        continue;
+                    }
+
+                    string rfid = parts[0];
+                    int bib = int.Parse(parts[1]);
+                    string firstName = parts[2];
+                    string lastName = parts[3];
+                    string gender = parts[4];
+                    DateTime birthday = DateTime.Parse(parts[5]);
+
+                    // Calculate age based on the race date
+                    int age = CalculateAge(birthday, raceDate);
+
+                    DataRowView selectedRace = (DataRowView)cmbRaces.SelectedItem;
+                    DataRowView selectedDistance = (DataRowView)cmbDistances.SelectedItem;
+
+                    MySqlCommand command = new MySqlCommand(
+                        "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id) " +
+                        "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId)", connection);
+
+                    command.Parameters.AddWithValue("@Rfid", rfid);
+                    command.Parameters.AddWithValue("@Bib", bib);
+                    command.Parameters.AddWithValue("@FirstName", firstName);
+                    command.Parameters.AddWithValue("@LastName", lastName);
+                    command.Parameters.AddWithValue("@Gender", gender);
+                    command.Parameters.AddWithValue("@Birthday", birthday);
+                    command.Parameters.AddWithValue("@Age", age);
+                    command.Parameters.AddWithValue("@RaceName", selectedRace["name"].ToString());
+                    command.Parameters.AddWithValue("@RaceDate", raceDate);
+                    command.Parameters.AddWithValue("@DistanceName", selectedDistance["name"].ToString());
+                    command.Parameters.AddWithValue("@DistanceLaps", GetDistanceLaps((int)selectedDistance["id"]));
+                    command.Parameters.AddWithValue("@DistanceIntervals", GetDistanceIntervals((int)selectedDistance["id"]));
+                    command.Parameters.AddWithValue("@DistanceId", (int)selectedDistance["id"]);
+
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error adding participant from line: {line}\nError: {ex.Message}", "Import Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                MessageBox.Show("Import completed.", "Import", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
     }

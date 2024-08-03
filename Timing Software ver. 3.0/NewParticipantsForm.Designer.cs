@@ -3,23 +3,6 @@
     partial class NewParticipantsForm
     {
         private System.ComponentModel.IContainer components = null;
-        private System.Windows.Forms.ComboBox cmbRaces;
-        private System.Windows.Forms.ComboBox cmbDistances;
-        private System.Windows.Forms.TextBox txtRfid;
-        private System.Windows.Forms.TextBox txtBib;
-        private System.Windows.Forms.TextBox txtFirstName;
-        private System.Windows.Forms.TextBox txtLastName;
-        private System.Windows.Forms.ComboBox cmbGender;
-        private System.Windows.Forms.DateTimePicker dtpBirthday;
-        private System.Windows.Forms.Button btnAddParticipant;
-        private System.Windows.Forms.Label lblRace;
-        private System.Windows.Forms.Label lblDistance;
-        private System.Windows.Forms.Label lblRfid;
-        private System.Windows.Forms.Label lblBib;
-        private System.Windows.Forms.Label lblFirstName;
-        private System.Windows.Forms.Label lblLastName;
-        private System.Windows.Forms.Label lblGender;
-        private System.Windows.Forms.Label lblBirthday;
 
         protected override void Dispose(bool disposing)
         {
@@ -41,21 +24,23 @@
             this.cmbGender = new System.Windows.Forms.ComboBox();
             this.dtpBirthday = new System.Windows.Forms.DateTimePicker();
             this.btnAddParticipant = new System.Windows.Forms.Button();
-            this.lblRace = new System.Windows.Forms.Label();
-            this.lblDistance = new System.Windows.Forms.Label();
+            this.btnImportParticipants = new System.Windows.Forms.Button();
             this.lblRfid = new System.Windows.Forms.Label();
             this.lblBib = new System.Windows.Forms.Label();
             this.lblFirstName = new System.Windows.Forms.Label();
             this.lblLastName = new System.Windows.Forms.Label();
             this.lblGender = new System.Windows.Forms.Label();
             this.lblBirthday = new System.Windows.Forms.Label();
+            this.lblRaces = new System.Windows.Forms.Label();
+            this.lblDistances = new System.Windows.Forms.Label();
             this.SuspendLayout();
 
             // 
             // cmbRaces
             // 
+            this.cmbRaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbRaces.FormattingEnabled = true;
-            this.cmbRaces.Location = new System.Drawing.Point(120, 12);
+            this.cmbRaces.Location = new System.Drawing.Point(100, 20);
             this.cmbRaces.Name = "cmbRaces";
             this.cmbRaces.Size = new System.Drawing.Size(200, 21);
             this.cmbRaces.TabIndex = 0;
@@ -64,8 +49,9 @@
             // 
             // cmbDistances
             // 
+            this.cmbDistances.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbDistances.FormattingEnabled = true;
-            this.cmbDistances.Location = new System.Drawing.Point(120, 39);
+            this.cmbDistances.Location = new System.Drawing.Point(100, 50);
             this.cmbDistances.Name = "cmbDistances";
             this.cmbDistances.Size = new System.Drawing.Size(200, 21);
             this.cmbDistances.TabIndex = 1;
@@ -74,7 +60,7 @@
             // 
             // txtRfid
             // 
-            this.txtRfid.Location = new System.Drawing.Point(120, 66);
+            this.txtRfid.Location = new System.Drawing.Point(100, 80);
             this.txtRfid.Name = "txtRfid";
             this.txtRfid.Size = new System.Drawing.Size(200, 20);
             this.txtRfid.TabIndex = 2;
@@ -82,7 +68,7 @@
             // 
             // txtBib
             // 
-            this.txtBib.Location = new System.Drawing.Point(120, 92);
+            this.txtBib.Location = new System.Drawing.Point(100, 110);
             this.txtBib.Name = "txtBib";
             this.txtBib.Size = new System.Drawing.Size(200, 20);
             this.txtBib.TabIndex = 3;
@@ -90,7 +76,7 @@
             // 
             // txtFirstName
             // 
-            this.txtFirstName.Location = new System.Drawing.Point(120, 118);
+            this.txtFirstName.Location = new System.Drawing.Point(100, 140);
             this.txtFirstName.Name = "txtFirstName";
             this.txtFirstName.Size = new System.Drawing.Size(200, 20);
             this.txtFirstName.TabIndex = 4;
@@ -98,7 +84,7 @@
             // 
             // txtLastName
             // 
-            this.txtLastName.Location = new System.Drawing.Point(120, 144);
+            this.txtLastName.Location = new System.Drawing.Point(100, 170);
             this.txtLastName.Name = "txtLastName";
             this.txtLastName.Size = new System.Drawing.Size(200, 20);
             this.txtLastName.TabIndex = 5;
@@ -106,11 +92,10 @@
             // 
             // cmbGender
             // 
+            this.cmbGender.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbGender.FormattingEnabled = true;
-            this.cmbGender.Items.AddRange(new object[] {
-            "Male",
-            "Female"});
-            this.cmbGender.Location = new System.Drawing.Point(120, 170);
+            this.cmbGender.Items.AddRange(new object[] { "Male", "Female" });
+            this.cmbGender.Location = new System.Drawing.Point(100, 200);
             this.cmbGender.Name = "cmbGender";
             this.cmbGender.Size = new System.Drawing.Size(200, 21);
             this.cmbGender.TabIndex = 6;
@@ -119,7 +104,7 @@
             // dtpBirthday
             // 
             this.dtpBirthday.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            this.dtpBirthday.Location = new System.Drawing.Point(120, 197);
+            this.dtpBirthday.Location = new System.Drawing.Point(100, 230);
             this.dtpBirthday.Name = "dtpBirthday";
             this.dtpBirthday.Size = new System.Drawing.Size(200, 20);
             this.dtpBirthday.TabIndex = 7;
@@ -127,7 +112,7 @@
             // 
             // btnAddParticipant
             // 
-            this.btnAddParticipant.Location = new System.Drawing.Point(120, 223);
+            this.btnAddParticipant.Location = new System.Drawing.Point(100, 260);
             this.btnAddParticipant.Name = "btnAddParticipant";
             this.btnAddParticipant.Size = new System.Drawing.Size(200, 23);
             this.btnAddParticipant.TabIndex = 8;
@@ -136,97 +121,109 @@
             this.btnAddParticipant.Click += new System.EventHandler(this.btnAddParticipant_Click);
 
             // 
-            // lblRace
+            // btnImportParticipants
             // 
-            this.lblRace.AutoSize = true;
-            this.lblRace.Location = new System.Drawing.Point(12, 15);
-            this.lblRace.Name = "lblRace";
-            this.lblRace.Size = new System.Drawing.Size(32, 13);
-            this.lblRace.TabIndex = 9;
-            this.lblRace.Text = "Race:";
-
-            // 
-            // lblDistance
-            // 
-            this.lblDistance.AutoSize = true;
-            this.lblDistance.Location = new System.Drawing.Point(12, 42);
-            this.lblDistance.Name = "lblDistance";
-            this.lblDistance.Size = new System.Drawing.Size(54, 13);
-            this.lblDistance.TabIndex = 10;
-            this.lblDistance.Text = "Distance:";
+            this.btnImportParticipants.Location = new System.Drawing.Point(100, 290);
+            this.btnImportParticipants.Name = "btnImportParticipants";
+            this.btnImportParticipants.Size = new System.Drawing.Size(200, 23);
+            this.btnImportParticipants.TabIndex = 9;
+            this.btnImportParticipants.Text = "Import Participants";
+            this.btnImportParticipants.UseVisualStyleBackColor = true;
+            this.btnImportParticipants.Click += new System.EventHandler(this.btnImportParticipants_Click);
 
             // 
             // lblRfid
             // 
             this.lblRfid.AutoSize = true;
-            this.lblRfid.Location = new System.Drawing.Point(12, 69);
+            this.lblRfid.Location = new System.Drawing.Point(20, 83);
             this.lblRfid.Name = "lblRfid";
-            this.lblRfid.Size = new System.Drawing.Size(31, 13);
-            this.lblRfid.TabIndex = 11;
-            this.lblRfid.Text = "RFID:";
+            this.lblRfid.Size = new System.Drawing.Size(25, 13);
+            this.lblRfid.TabIndex = 10;
+            this.lblRfid.Text = "RFID";
 
             // 
             // lblBib
             // 
             this.lblBib.AutoSize = true;
-            this.lblBib.Location = new System.Drawing.Point(12, 95);
+            this.lblBib.Location = new System.Drawing.Point(20, 113);
             this.lblBib.Name = "lblBib";
-            this.lblBib.Size = new System.Drawing.Size(27, 13);
-            this.lblBib.TabIndex = 12;
-            this.lblBib.Text = "Bib:";
+            this.lblBib.Size = new System.Drawing.Size(24, 13);
+            this.lblBib.TabIndex = 11;
+            this.lblBib.Text = "BIB";
 
             // 
             // lblFirstName
             // 
             this.lblFirstName.AutoSize = true;
-            this.lblFirstName.Location = new System.Drawing.Point(12, 121);
+            this.lblFirstName.Location = new System.Drawing.Point(20, 143);
             this.lblFirstName.Name = "lblFirstName";
-            this.lblFirstName.Size = new System.Drawing.Size(60, 13);
-            this.lblFirstName.TabIndex = 13;
-            this.lblFirstName.Text = "First Name:";
+            this.lblFirstName.Size = new System.Drawing.Size(57, 13);
+            this.lblFirstName.TabIndex = 12;
+            this.lblFirstName.Text = "First Name";
 
             // 
             // lblLastName
             // 
             this.lblLastName.AutoSize = true;
-            this.lblLastName.Location = new System.Drawing.Point(12, 147);
+            this.lblLastName.Location = new System.Drawing.Point(20, 173);
             this.lblLastName.Name = "lblLastName";
-            this.lblLastName.Size = new System.Drawing.Size(61, 13);
-            this.lblLastName.TabIndex = 14;
-            this.lblLastName.Text = "Last Name:";
+            this.lblLastName.Size = new System.Drawing.Size(58, 13);
+            this.lblLastName.TabIndex = 13;
+            this.lblLastName.Text = "Last Name";
 
             // 
             // lblGender
             // 
             this.lblGender.AutoSize = true;
-            this.lblGender.Location = new System.Drawing.Point(12, 173);
+            this.lblGender.Location = new System.Drawing.Point(20, 203);
             this.lblGender.Name = "lblGender";
-            this.lblGender.Size = new System.Drawing.Size(45, 13);
-            this.lblGender.TabIndex = 15;
-            this.lblGender.Text = "Gender:";
+            this.lblGender.Size = new System.Drawing.Size(42, 13);
+            this.lblGender.TabIndex = 14;
+            this.lblGender.Text = "Gender";
 
             // 
             // lblBirthday
             // 
             this.lblBirthday.AutoSize = true;
-            this.lblBirthday.Location = new System.Drawing.Point(12, 203);
+            this.lblBirthday.Location = new System.Drawing.Point(20, 233);
             this.lblBirthday.Name = "lblBirthday";
-            this.lblBirthday.Size = new System.Drawing.Size(48, 13);
-            this.lblBirthday.TabIndex = 16;
-            this.lblBirthday.Text = "Birthday:";
+            this.lblBirthday.Size = new System.Drawing.Size(45, 13);
+            this.lblBirthday.TabIndex = 15;
+            this.lblBirthday.Text = "Birthday";
+
+            // 
+            // lblRaces
+            // 
+            this.lblRaces.AutoSize = true;
+            this.lblRaces.Location = new System.Drawing.Point(20, 23);
+            this.lblRaces.Name = "lblRaces";
+            this.lblRaces.Size = new System.Drawing.Size(39, 13);
+            this.lblRaces.TabIndex = 16;
+            this.lblRaces.Text = "Races";
+
+            // 
+            // lblDistances
+            // 
+            this.lblDistances.AutoSize = true;
+            this.lblDistances.Location = new System.Drawing.Point(20, 53);
+            this.lblDistances.Name = "lblDistances";
+            this.lblDistances.Size = new System.Drawing.Size(54, 13);
+            this.lblDistances.TabIndex = 17;
+            this.lblDistances.Text = "Distances";
 
             // 
             // NewParticipantsForm
             // 
-            this.ClientSize = new System.Drawing.Size(334, 261);
+            this.ClientSize = new System.Drawing.Size(340, 330);
+            this.Controls.Add(this.lblDistances);
+            this.Controls.Add(this.lblRaces);
             this.Controls.Add(this.lblBirthday);
             this.Controls.Add(this.lblGender);
             this.Controls.Add(this.lblLastName);
             this.Controls.Add(this.lblFirstName);
             this.Controls.Add(this.lblBib);
             this.Controls.Add(this.lblRfid);
-            this.Controls.Add(this.lblDistance);
-            this.Controls.Add(this.lblRace);
+            this.Controls.Add(this.btnImportParticipants);
             this.Controls.Add(this.btnAddParticipant);
             this.Controls.Add(this.dtpBirthday);
             this.Controls.Add(this.cmbGender);
@@ -237,9 +234,28 @@
             this.Controls.Add(this.cmbDistances);
             this.Controls.Add(this.cmbRaces);
             this.Name = "NewParticipantsForm";
-            this.Text = "Add New Participant";
+            this.Text = "New Participants";
             this.ResumeLayout(false);
             this.PerformLayout();
         }
+
+        private System.Windows.Forms.ComboBox cmbRaces;
+        private System.Windows.Forms.ComboBox cmbDistances;
+        private System.Windows.Forms.TextBox txtRfid;
+        private System.Windows.Forms.TextBox txtBib;
+        private System.Windows.Forms.TextBox txtFirstName;
+        private System.Windows.Forms.TextBox txtLastName;
+        private System.Windows.Forms.ComboBox cmbGender;
+        private System.Windows.Forms.DateTimePicker dtpBirthday;
+        private System.Windows.Forms.Button btnAddParticipant;
+        private System.Windows.Forms.Button btnImportParticipants;
+        private System.Windows.Forms.Label lblRfid;
+        private System.Windows.Forms.Label lblBib;
+        private System.Windows.Forms.Label lblFirstName;
+        private System.Windows.Forms.Label lblLastName;
+        private System.Windows.Forms.Label lblGender;
+        private System.Windows.Forms.Label lblBirthday;
+        private System.Windows.Forms.Label lblRaces;
+        private System.Windows.Forms.Label lblDistances;
     }
 }
