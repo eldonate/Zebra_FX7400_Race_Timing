@@ -130,10 +130,7 @@ namespace RaceManager
                     var raceName = reader["race_name"].ToString();
                     var distanceName = reader["distance_name"].ToString();
                     var raceDate = (DateTime)reader["race_date"];
-                    var category = reader["category"] != DBNull.Value ? reader["category"].ToString() : "Unknown"; // Get the category from the runners table
-
-                    // Debug output to verify category retrieval
-                    Console.WriteLine($"RFID: {rfid}, Category: {category}");
+                    var category = reader["category"] != DBNull.Value ? reader["category"].ToString() : "Unknown";
 
                     // Check if logging for specific distance is enabled and if the RFID belongs to the selected distance
                     if (chkLogSpecificDistance.Checked && cmbDistances.SelectedValue != null)
@@ -171,6 +168,13 @@ namespace RaceManager
 
                     lastReadTimes[rfid] = timestamp;
 
+                    // Calculate the position for the current RFID and distance if it's the last lap
+                    int? position = null;
+                    if (distanceLaps == 1 || remainingLaps[rfid] == 0)
+                    {
+                        position = CalculatePosition(rfid, distanceName, distanceLaps);
+                    }
+
                     // Close the reader before opening a new one
                     reader.Close();
 
@@ -190,8 +194,8 @@ namespace RaceManager
                     {
                         insertConn.Open();
                         var insertCmd = new MySqlCommand(
-                            "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time) " +
-                            "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time)",
+                            "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position) " +
+                            "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position)",
                             insertConn);
                         insertCmd.Parameters.AddWithValue("@rfid", rfid);
                         insertCmd.Parameters.AddWithValue("@timestamp", timestamp);
@@ -206,13 +210,31 @@ namespace RaceManager
                         insertCmd.Parameters.AddWithValue("@race_date", raceDate);
                         insertCmd.Parameters.AddWithValue("@distance_laps", distanceLaps);
                         insertCmd.Parameters.AddWithValue("@distance_intervals", distanceIntervals);
-                        insertCmd.Parameters.AddWithValue("@category", category); // Use the retrieved category
+                        insertCmd.Parameters.AddWithValue("@category", category);
                         insertCmd.Parameters.AddWithValue("@elapsed_time", elapsedTime);
+                        insertCmd.Parameters.AddWithValue("@position", position.HasValue ? (object)position.Value : DBNull.Value);
                         insertCmd.ExecuteNonQuery();
                     }
                 }
             }
         }
+
+        // Method to calculate the position based on RFID and distance name
+        private int CalculatePosition(string rfid, string distanceName, int distanceLaps)
+        {
+            using (var conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                var cmd = new MySqlCommand(
+                    "SELECT COUNT(DISTINCT rfid) FROM results WHERE distance_name = @distance_name AND (distance_laps = 1 OR (distance_laps > 1 AND position IS NOT NULL))",
+                    conn);
+                cmd.Parameters.AddWithValue("@distance_name", distanceName);
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count + 1;
+            }
+        }
+
 
 
 
@@ -228,9 +250,7 @@ namespace RaceManager
                 adapter.Fill(dt);
                 dataGridView1.DataSource = dt;
 
-                // Hide the distance_id and race_id columns
-                dataGridView1.Columns["distance_id"].Visible = false;
-                dataGridView1.Columns["race_id"].Visible = false;
+
 
                 int currentRecordCount = dt.Rows.Count;
                 if (currentRecordCount > previousRecordCount)
