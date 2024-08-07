@@ -29,15 +29,19 @@
             this.btnSetCurrentTimestamp = new System.Windows.Forms.Button();
             this.dtpStartTime = new System.Windows.Forms.DateTimePicker();
             this.chkLogSpecificDistance = new System.Windows.Forms.CheckBox();
+            this.comboBoxEvents = new System.Windows.Forms.ComboBox();
+            this.btnTransferRecords = new System.Windows.Forms.Button();
+            this.textBoxEventId = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
             // dataGridView1
             // 
+            this.dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(12, 150);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(760, 300);
+            this.dataGridView1.Size = new System.Drawing.Size(982, 300);
             this.dataGridView1.TabIndex = 0;
             // 
             // btnSelectFile
@@ -123,9 +127,38 @@
             this.chkLogSpecificDistance.Text = "Log Specific Distance";
             this.chkLogSpecificDistance.UseVisualStyleBackColor = true;
             // 
+            // comboBoxEvents
+            // 
+            this.comboBoxEvents.FormattingEnabled = true;
+            this.comboBoxEvents.Location = new System.Drawing.Point(667, 123);
+            this.comboBoxEvents.Name = "comboBoxEvents";
+            this.comboBoxEvents.Size = new System.Drawing.Size(159, 21);
+            this.comboBoxEvents.TabIndex = 9;
+            // 
+            // btnTransferRecords
+            // 
+            this.btnTransferRecords.Location = new System.Drawing.Point(883, 124);
+            this.btnTransferRecords.Name = "btnTransferRecords";
+            this.btnTransferRecords.Size = new System.Drawing.Size(112, 23);
+            this.btnTransferRecords.TabIndex = 10;
+            this.btnTransferRecords.Text = "Publish Results";
+            this.btnTransferRecords.UseVisualStyleBackColor = true;
+            this.btnTransferRecords.Click += new System.EventHandler(this.btnTransferRecords_Click);
+            // 
+            // textBoxEventId
+            // 
+            this.textBoxEventId.Location = new System.Drawing.Point(832, 124);
+            this.textBoxEventId.Name = "textBoxEventId";
+            this.textBoxEventId.ReadOnly = true;
+            this.textBoxEventId.Size = new System.Drawing.Size(45, 20);
+            this.textBoxEventId.TabIndex = 11;
+            // 
             // reading
             // 
-            this.ClientSize = new System.Drawing.Size(784, 461);
+            this.ClientSize = new System.Drawing.Size(1006, 461);
+            this.Controls.Add(this.textBoxEventId);
+            this.Controls.Add(this.btnTransferRecords);
+            this.Controls.Add(this.comboBoxEvents);
             this.Controls.Add(this.chkLogSpecificDistance);
             this.Controls.Add(this.dtpStartTime);
             this.Controls.Add(this.btnSetCurrentTimestamp);
@@ -156,5 +189,8 @@
         private System.Windows.Forms.Button btnSetCurrentTimestamp;
         private System.Windows.Forms.DateTimePicker dtpStartTime;
         private System.Windows.Forms.CheckBox chkLogSpecificDistance;
+        private System.Windows.Forms.ComboBox comboBoxEvents;
+        private System.Windows.Forms.Button btnTransferRecords;
+        private System.Windows.Forms.TextBox textBoxEventId;
     }
 }

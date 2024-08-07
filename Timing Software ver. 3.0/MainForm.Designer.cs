@@ -39,7 +39,7 @@
             this.btnAddParticipant = new System.Windows.Forms.Button();
             this.btnOpenReadingForm = new System.Windows.Forms.Button();
             this.btnNewParticipants = new System.Windows.Forms.Button();
-            this.btnNewForm = new System.Windows.Forms.Button(); // Declare the new button
+            this.btnNewForm = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txtRaceName
@@ -207,7 +207,7 @@
             // 
             // btnAddParticipant
             // 
-            this.btnAddParticipant.Location = new System.Drawing.Point(250, 249);
+            this.btnAddParticipant.Location = new System.Drawing.Point(250, 356);
             this.btnAddParticipant.Name = "btnAddParticipant";
             this.btnAddParticipant.Size = new System.Drawing.Size(200, 23);
             this.btnAddParticipant.TabIndex = 19;
@@ -217,7 +217,7 @@
             // 
             // btnOpenReadingForm
             // 
-            this.btnOpenReadingForm.Location = new System.Drawing.Point(250, 278);
+            this.btnOpenReadingForm.Location = new System.Drawing.Point(250, 382);
             this.btnOpenReadingForm.Name = "btnOpenReadingForm";
             this.btnOpenReadingForm.Size = new System.Drawing.Size(200, 23);
             this.btnOpenReadingForm.TabIndex = 20;
@@ -227,28 +227,28 @@
             // 
             // btnNewParticipants
             // 
-            this.btnNewParticipants.Location = new System.Drawing.Point(250, 307);
+            this.btnNewParticipants.Location = new System.Drawing.Point(250, 249);
             this.btnNewParticipants.Name = "btnNewParticipants";
             this.btnNewParticipants.Size = new System.Drawing.Size(200, 23);
             this.btnNewParticipants.TabIndex = 21;
-            this.btnNewParticipants.Text = "New Participants";
+            this.btnNewParticipants.Text = "Participants";
             this.btnNewParticipants.UseVisualStyleBackColor = true;
             this.btnNewParticipants.Click += new System.EventHandler(this.btnNewParticipants_Click);
             // 
             // btnNewForm
             // 
-            this.btnNewForm.Location = new System.Drawing.Point(250, 336);
+            this.btnNewForm.Location = new System.Drawing.Point(250, 278);
             this.btnNewForm.Name = "btnNewForm";
             this.btnNewForm.Size = new System.Drawing.Size(200, 23);
             this.btnNewForm.TabIndex = 22;
-            this.btnNewForm.Text = "Open New Form";
+            this.btnNewForm.Text = "Reading";
             this.btnNewForm.UseVisualStyleBackColor = true;
             this.btnNewForm.Click += new System.EventHandler(this.btnNewForm_Click);
             // 
             // MainForm
             // 
             this.ClientSize = new System.Drawing.Size(464, 421);
-            this.Controls.Add(this.btnNewForm); // Add the new button to the form
+            this.Controls.Add(this.btnNewForm);
             this.Controls.Add(this.btnNewParticipants);
             this.Controls.Add(this.btnOpenReadingForm);
             this.Controls.Add(this.btnAddParticipant);

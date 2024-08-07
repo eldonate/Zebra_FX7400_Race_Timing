@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Media;
-using System.Text;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 
@@ -20,17 +18,24 @@ namespace RaceManager
         private Dictionary<string, DateTime> lastReadTimes; // Tracks last read times for each RFID
         private Dictionary<string, int> remainingLaps; // Tracks remaining laps for each RFID
 
+        private MySqlConnection remoteConnection;
+        private int selectedEventId;
+
         public reading()
         {
             InitializeComponent();
-            connectionString = GetConnectionString("../../../../dbconfig.txt");
+            connectionString = GetConnectionString("../../../../dbconfig.txt", false); // Pass false for local DB
             soundPlayer = new SoundPlayer("../../../../beep.wav");
             lastReadTimes = new Dictionary<string, DateTime>();
             remainingLaps = new Dictionary<string, int>();
+            comboBoxEvents.SelectedIndexChanged += comboBoxEvents_SelectedIndexChanged; // Subscribe to event
             LoadRaces();
+            LoadEvents();
         }
 
-        private string GetConnectionString(string configFile)
+
+
+        private string GetConnectionString(string configFile, bool isRemote)
         {
             var lines = File.ReadAllLines(configFile);
             var connectionStringBuilder = new MySqlConnectionStringBuilder();
@@ -40,23 +45,50 @@ namespace RaceManager
                 var parts = line.Split('=');
                 if (parts.Length == 2)
                 {
-                    switch (parts[0].Trim().ToLower())
+                    var key = parts[0].Trim().ToLower();
+                    var value = parts[1].Trim();
+
+                    if (isRemote)
                     {
-                        case "server":
-                            connectionStringBuilder.Server = parts[1].Trim();
-                            break;
-                        case "user":
-                            connectionStringBuilder.UserID = parts[1].Trim();
-                            break;
-                        case "database":
-                            connectionStringBuilder.Database = parts[1].Trim();
-                            break;
-                        case "port":
-                            connectionStringBuilder.Port = uint.Parse(parts[1].Trim());
-                            break;
-                        case "password":
-                            connectionStringBuilder.Password = parts[1].Trim();
-                            break;
+                        switch (key)
+                        {
+                            case "remote_server":
+                                connectionStringBuilder.Server = value;
+                                break;
+                            case "remote_user":
+                                connectionStringBuilder.UserID = value;
+                                break;
+                            case "remote_database":
+                                connectionStringBuilder.Database = value;
+                                break;
+                            case "remote_port":
+                                connectionStringBuilder.Port = uint.Parse(value);
+                                break;
+                            case "remote_password":
+                                connectionStringBuilder.Password = value;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        switch (key)
+                        {
+                            case "server":
+                                connectionStringBuilder.Server = value;
+                                break;
+                            case "user":
+                                connectionStringBuilder.UserID = value;
+                                break;
+                            case "database":
+                                connectionStringBuilder.Database = value;
+                                break;
+                            case "port":
+                                connectionStringBuilder.Port = uint.Parse(value);
+                                break;
+                            case "password":
+                                connectionStringBuilder.Password = value;
+                                break;
+                        }
                     }
                 }
             }
@@ -235,10 +267,6 @@ namespace RaceManager
             }
         }
 
-
-
-
-
         private void LoadResults()
         {
             using (var conn = new MySqlConnection(connectionString))
@@ -249,8 +277,6 @@ namespace RaceManager
                 var dt = new DataTable();
                 adapter.Fill(dt);
                 dataGridView1.DataSource = dt;
-
-
 
                 int currentRecordCount = dt.Rows.Count;
                 if (currentRecordCount > previousRecordCount)
@@ -306,8 +332,11 @@ namespace RaceManager
 
         private void cmbRaces_SelectedIndexChanged(object sender, EventArgs e)
         {
-            int raceId = (int)cmbRaces.SelectedValue;
-            LoadDistances(raceId);
+            if (cmbRaces.SelectedValue != null)
+            {
+                int raceId = (int)cmbRaces.SelectedValue;
+                LoadDistances(raceId);
+            }
         }
 
         private void cmbDistances_SelectedIndexChanged(object sender, EventArgs e)
@@ -388,5 +417,134 @@ namespace RaceManager
                 }
             }
         }
+
+        private void LoadEvents()
+        {
+            string connectionString = GetConnectionString("../../../../dbconfig.txt", true);
+            try
+            {
+                using (remoteConnection = new MySqlConnection(connectionString))
+                {
+                    remoteConnection.Open();
+                    string query = "SELECT id, event_name FROM events";
+                    MySqlCommand cmd = new MySqlCommand(query, remoteConnection);
+                    MySqlDataReader reader = cmd.ExecuteReader();
+
+                    DataTable dt = new DataTable();
+                    dt.Load(reader);
+
+                    // Add a new column to format the display
+                    dt.Columns.Add("Display", typeof(string), "event_name + ' (' + CONVERT(id, 'System.String') + ')'");
+
+                    comboBoxEvents.DisplayMember = "Display"; // Show event_name and id
+                    comboBoxEvents.ValueMember = "id"; // Set id as the value
+                    comboBoxEvents.DataSource = dt;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading events: " + ex.Message);
+            }
+        }
+
+
+
+
+
+        private void comboBoxEvents_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBoxEvents.SelectedValue != null)
+            {
+                selectedEventId = (int)comboBoxEvents.SelectedValue;
+
+                // Populate the TextBox with the selected Event ID
+                textBoxEventId.Text = selectedEventId.ToString();
+            }
+            else
+            {
+                MessageBox.Show("No event selected.");
+            }
+        }
+
+
+
+        private void btnTransferRecords_Click(object sender, EventArgs e)
+        {
+            string localConnectionString = GetConnectionString("../../../../dbconfig.txt", false);
+            string remoteConnectionString = GetConnectionString("../../../../dbconfig.txt", true);
+
+            try
+            {
+                // Validate the event_id input
+                if (!int.TryParse(textBoxEventId.Text, out int manualEventId))
+                {
+                    MessageBox.Show("Please enter a valid numeric event ID.");
+                    return;
+                }
+
+                using (var localConnection = new MySqlConnection(localConnectionString))
+                using (var remoteConnection = new MySqlConnection(remoteConnectionString))
+                {
+                    localConnection.Open();
+                    remoteConnection.Open();
+
+                    string selectQuery = "SELECT * FROM results";
+                    MySqlCommand selectCmd = new MySqlCommand(selectQuery, localConnection);
+                    MySqlDataReader reader = selectCmd.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        Console.WriteLine($"Debug: Preparing to insert with Event ID: {manualEventId}");
+
+                        string insertQuery = "INSERT INTO results_zebra (id, rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, event_id) " +
+                                             "VALUES (@id, @rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @event_id)";
+
+                        using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, remoteConnection))
+                        {
+                            insertCmd.Parameters.AddWithValue("@id", reader["id"]);
+                            insertCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
+                            insertCmd.Parameters.AddWithValue("@timestamp", reader["timestamp"]);
+                            insertCmd.Parameters.AddWithValue("@gap", reader["gap"]);
+                            insertCmd.Parameters.AddWithValue("@first_name", reader["first_name"]);
+                            insertCmd.Parameters.AddWithValue("@last_name", reader["last_name"]);
+                            insertCmd.Parameters.AddWithValue("@gender", reader["gender"]);
+                            insertCmd.Parameters.AddWithValue("@birthday", reader["birthday"]);
+                            insertCmd.Parameters.AddWithValue("@age", reader["age"]);
+                            insertCmd.Parameters.AddWithValue("@race_name", reader["race_name"]);
+                            insertCmd.Parameters.AddWithValue("@distance_name", reader["distance_name"]);
+                            insertCmd.Parameters.AddWithValue("@race_date", reader["race_date"]);
+                            insertCmd.Parameters.AddWithValue("@distance_laps", reader["distance_laps"]);
+                            insertCmd.Parameters.AddWithValue("@distance_intervals", reader["distance_intervals"]);
+                            insertCmd.Parameters.AddWithValue("@category", reader["category"]);
+                            insertCmd.Parameters.AddWithValue("@elapsed_time", reader["elapsed_time"]);
+                            insertCmd.Parameters.AddWithValue("@position", reader["position"]);
+                            insertCmd.Parameters.AddWithValue("@event_id", manualEventId); // Use the value from the TextBox
+
+                            // Debug: Log the value of event_id before executing the query
+                            Console.WriteLine($"Debug: Executing insert with Event ID: {manualEventId}");
+
+                            // Execute the insert command
+                            insertCmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+
+                MessageBox.Show("Records transferred successfully.");
+            }
+            catch (Exception ex)
+            {
+                // Log the exception details
+                Console.WriteLine($"Error transferring records: {ex.Message}");
+                MessageBox.Show($"Error transferring records: {ex.Message}");
+            }
+        }
+
+
+
+
+
+
+
+
     }
 }
