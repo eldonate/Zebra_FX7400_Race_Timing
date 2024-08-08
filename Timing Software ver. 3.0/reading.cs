@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.IO;
 using System.Media;
 using System.Windows.Forms;
@@ -20,7 +21,6 @@ namespace RaceManager
 
         private MySqlConnection remoteConnection;
         private int selectedEventId;
-
         public reading()
         {
             InitializeComponent();
@@ -31,6 +31,8 @@ namespace RaceManager
             comboBoxEvents.SelectedIndexChanged += comboBoxEvents_SelectedIndexChanged; // Subscribe to event
             LoadRaces();
             LoadEvents();
+            // Initialize CheckBox
+
         }
 
 
@@ -180,6 +182,12 @@ namespace RaceManager
                     {
                         reader.Close();
                         return;
+                    }
+
+                    // Adjust laps if the CheckBox is checked
+                    if (chkAddLap.Checked)
+                    {
+                        distanceLaps += 1;
                     }
 
                     // Check and update the remaining laps for the RFID

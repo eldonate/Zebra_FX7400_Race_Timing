@@ -32,6 +32,7 @@
             this.comboBoxEvents = new System.Windows.Forms.ComboBox();
             this.btnTransferRecords = new System.Windows.Forms.Button();
             this.textBoxEventId = new System.Windows.Forms.TextBox();
+            this.chkAddLap = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -46,7 +47,7 @@
             // 
             // btnSelectFile
             // 
-            this.btnSelectFile.Location = new System.Drawing.Point(12, 12);
+            this.btnSelectFile.Location = new System.Drawing.Point(12, 13);
             this.btnSelectFile.Name = "btnSelectFile";
             this.btnSelectFile.Size = new System.Drawing.Size(100, 23);
             this.btnSelectFile.TabIndex = 1;
@@ -77,7 +78,7 @@
             // lblElapsedTime
             // 
             this.lblElapsedTime.AutoSize = true;
-            this.lblElapsedTime.Location = new System.Drawing.Point(12, 50);
+            this.lblElapsedTime.Location = new System.Drawing.Point(12, 51);
             this.lblElapsedTime.Name = "lblElapsedTime";
             this.lblElapsedTime.Size = new System.Drawing.Size(77, 13);
             this.lblElapsedTime.TabIndex = 4;
@@ -120,7 +121,7 @@
             // chkLogSpecificDistance
             // 
             this.chkLogSpecificDistance.AutoSize = true;
-            this.chkLogSpecificDistance.Location = new System.Drawing.Point(130, 50);
+            this.chkLogSpecificDistance.Location = new System.Drawing.Point(15, 77);
             this.chkLogSpecificDistance.Name = "chkLogSpecificDistance";
             this.chkLogSpecificDistance.Size = new System.Drawing.Size(130, 17);
             this.chkLogSpecificDistance.TabIndex = 8;
@@ -153,9 +154,20 @@
             this.textBoxEventId.Size = new System.Drawing.Size(45, 20);
             this.textBoxEventId.TabIndex = 11;
             // 
+            // chkAddLap
+            // 
+            this.chkAddLap.AutoSize = true;
+            this.chkAddLap.Location = new System.Drawing.Point(15, 100);
+            this.chkAddLap.Name = "chkAddLap";
+            this.chkAddLap.Size = new System.Drawing.Size(110, 17);
+            this.chkAddLap.TabIndex = 12;
+            this.chkAddLap.Text = "Add Starting Laps";
+            this.chkAddLap.UseVisualStyleBackColor = true;
+            // 
             // reading
             // 
             this.ClientSize = new System.Drawing.Size(1006, 461);
+            this.Controls.Add(this.chkAddLap);
             this.Controls.Add(this.textBoxEventId);
             this.Controls.Add(this.btnTransferRecords);
             this.Controls.Add(this.comboBoxEvents);
@@ -192,5 +204,6 @@
         private System.Windows.Forms.ComboBox comboBoxEvents;
         private System.Windows.Forms.Button btnTransferRecords;
         private System.Windows.Forms.TextBox textBoxEventId;
+        private System.Windows.Forms.CheckBox chkAddLap;
     }
 }
