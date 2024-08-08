@@ -33,6 +33,8 @@
             this.btnTransferRecords = new System.Windows.Forms.Button();
             this.textBoxEventId = new System.Windows.Forms.TextBox();
             this.chkAddLap = new System.Windows.Forms.CheckBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -91,7 +93,7 @@
             // 
             // btnSetStartTime
             // 
-            this.btnSetStartTime.Location = new System.Drawing.Point(680, 12);
+            this.btnSetStartTime.Location = new System.Drawing.Point(726, 12);
             this.btnSetStartTime.Name = "btnSetStartTime";
             this.btnSetStartTime.Size = new System.Drawing.Size(100, 23);
             this.btnSetStartTime.TabIndex = 5;
@@ -101,7 +103,7 @@
             // 
             // btnSetCurrentTimestamp
             // 
-            this.btnSetCurrentTimestamp.Location = new System.Drawing.Point(680, 41);
+            this.btnSetCurrentTimestamp.Location = new System.Drawing.Point(726, 41);
             this.btnSetCurrentTimestamp.Name = "btnSetCurrentTimestamp";
             this.btnSetCurrentTimestamp.Size = new System.Drawing.Size(100, 23);
             this.btnSetCurrentTimestamp.TabIndex = 6;
@@ -115,7 +117,7 @@
             this.dtpStartTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dtpStartTime.Location = new System.Drawing.Point(570, 12);
             this.dtpStartTime.Name = "dtpStartTime";
-            this.dtpStartTime.Size = new System.Drawing.Size(100, 20);
+            this.dtpStartTime.Size = new System.Drawing.Size(150, 20);
             this.dtpStartTime.TabIndex = 7;
             // 
             // chkLogSpecificDistance
@@ -159,14 +161,35 @@
             this.chkAddLap.AutoSize = true;
             this.chkAddLap.Location = new System.Drawing.Point(15, 100);
             this.chkAddLap.Name = "chkAddLap";
-            this.chkAddLap.Size = new System.Drawing.Size(110, 17);
+            this.chkAddLap.Size = new System.Drawing.Size(225, 17);
             this.chkAddLap.TabIndex = 12;
-            this.chkAddLap.Text = "Add Starting Laps";
+            this.chkAddLap.Text = "Add Starting Laps ( to count starting times)";
             this.chkAddLap.UseVisualStyleBackColor = true;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(15, 121);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(130, 23);
+            this.button1.TabIndex = 13;
+            this.button1.Text = "Add zero starting times";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(151, 126);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(147, 13);
+            this.label1.TabIndex = 14;
+            this.label1.Text = "( NOT counting starting times)";
             // 
             // reading
             // 
             this.ClientSize = new System.Drawing.Size(1006, 461);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.chkAddLap);
             this.Controls.Add(this.textBoxEventId);
             this.Controls.Add(this.btnTransferRecords);
@@ -205,5 +228,7 @@
         private System.Windows.Forms.Button btnTransferRecords;
         private System.Windows.Forms.TextBox textBoxEventId;
         private System.Windows.Forms.CheckBox chkAddLap;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label label1;
     }
 }

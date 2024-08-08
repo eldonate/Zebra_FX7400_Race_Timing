@@ -547,10 +547,101 @@ namespace RaceManager
             }
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (cmbRaces.SelectedValue == null || cmbDistances.SelectedValue == null)
+            {
+                MessageBox.Show("Please select both a race and a distance.");
+                return;
+            }
 
+            int selectedRaceId = (int)cmbRaces.SelectedValue;
+            int selectedDistanceId = (int)cmbDistances.SelectedValue;
+            DateTime todayDate = DateTime.Today;
+            string timestamp = todayDate.ToString("yyyy-MM-dd") + " 00:00:00.000";
+            string distanceName = string.Empty;
 
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
 
+                    // Fetch the distance_name using the selected distance_id from cmbDistances
+                    var cmdGetDistanceName = new MySqlCommand(
+                        "SELECT name FROM distances WHERE id = @distance_id", conn);
+                    cmdGetDistanceName.Parameters.AddWithValue("@distance_id", selectedDistanceId);
 
+                    distanceName = (string)cmdGetDistanceName.ExecuteScalar();
+                    if (string.IsNullOrEmpty(distanceName))
+                    {
+                        MessageBox.Show("Invalid distance selected. No matching distance found.");
+                        return;
+                    }
+                }
+
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // Fetch runners with the matching distance_name
+                    var cmdGetRunners = new MySqlCommand(
+                        "SELECT rfid, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category " +
+                        "FROM runners WHERE distance_name = @distance_name", conn);
+                    cmdGetRunners.Parameters.AddWithValue("@distance_name", distanceName);
+
+                    var reader = cmdGetRunners.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string rfid = reader["rfid"].ToString();
+                        string firstName = reader["first_name"].ToString();
+                        string lastName = reader["last_name"].ToString();
+                        string gender = reader["gender"].ToString();
+                        DateTime birthday = (DateTime)reader["birthday"];
+                        int age = (int)reader["age"];
+                        string raceName = reader["race_name"].ToString();
+                        DateTime raceDate = (DateTime)reader["race_date"];
+                        int distanceLaps = (int)reader["distance_laps"];
+                        int distanceIntervals = (int)reader["distance_intervals"];
+                        string category = reader["category"] != DBNull.Value ? reader["category"].ToString() : "Unknown";
+
+                        using (var insertConn = new MySqlConnection(connectionString))
+                        {
+                            insertConn.Open();
+                            var insertCmd = new MySqlCommand(
+                                "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position) " +
+                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position)",
+                                insertConn);
+
+                            insertCmd.Parameters.AddWithValue("@rfid", rfid);
+                            insertCmd.Parameters.AddWithValue("@timestamp", timestamp);
+                            insertCmd.Parameters.AddWithValue("@gap", 0); // Assuming a gap of 0 for the new lap
+                            insertCmd.Parameters.AddWithValue("@first_name", firstName);
+                            insertCmd.Parameters.AddWithValue("@last_name", lastName);
+                            insertCmd.Parameters.AddWithValue("@gender", gender);
+                            insertCmd.Parameters.AddWithValue("@birthday", birthday);
+                            insertCmd.Parameters.AddWithValue("@age", age);
+                            insertCmd.Parameters.AddWithValue("@race_name", raceName);
+                            insertCmd.Parameters.AddWithValue("@distance_name", distanceName);
+                            insertCmd.Parameters.AddWithValue("@race_date", raceDate);
+                            insertCmd.Parameters.AddWithValue("@distance_laps", distanceLaps + 1); // Adding one lap
+                            insertCmd.Parameters.AddWithValue("@distance_intervals", distanceIntervals);
+                            insertCmd.Parameters.AddWithValue("@category", category);
+                            insertCmd.Parameters.AddWithValue("@elapsed_time", "00:00:00:00"); // Setting elapsed time to 0
+                            insertCmd.Parameters.AddWithValue("@position", DBNull.Value); // Position is null for this entry
+
+                            insertCmd.ExecuteNonQuery();
+                        }
+                    }
+                    reader.Close();
+                }
+                MessageBox.Show("Lap added to all participants successfully.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error adding lap to all participants: " + ex.Message);
+            }
+        }
 
 
 
