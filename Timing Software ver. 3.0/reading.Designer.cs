@@ -30,11 +30,11 @@
             this.dtpStartTime = new System.Windows.Forms.DateTimePicker();
             this.chkLogSpecificDistance = new System.Windows.Forms.CheckBox();
             this.comboBoxEvents = new System.Windows.Forms.ComboBox();
-            this.btnTransferRecords = new System.Windows.Forms.Button();
             this.textBoxEventId = new System.Windows.Forms.TextBox();
             this.chkAddLap = new System.Windows.Forms.CheckBox();
             this.button1 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -138,16 +138,6 @@
             this.comboBoxEvents.Size = new System.Drawing.Size(159, 21);
             this.comboBoxEvents.TabIndex = 9;
             // 
-            // btnTransferRecords
-            // 
-            this.btnTransferRecords.Location = new System.Drawing.Point(883, 124);
-            this.btnTransferRecords.Name = "btnTransferRecords";
-            this.btnTransferRecords.Size = new System.Drawing.Size(112, 23);
-            this.btnTransferRecords.TabIndex = 10;
-            this.btnTransferRecords.Text = "Publish Results";
-            this.btnTransferRecords.UseVisualStyleBackColor = true;
-            this.btnTransferRecords.Click += new System.EventHandler(this.btnTransferRecords_Click);
-            // 
             // textBoxEventId
             // 
             this.textBoxEventId.Location = new System.Drawing.Point(832, 124);
@@ -181,18 +171,28 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(151, 126);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(147, 13);
+            this.label1.Size = new System.Drawing.Size(247, 13);
             this.label1.TabIndex = 14;
-            this.label1.Text = "( NOT counting starting times)";
+            this.label1.Text = "( NOT counting starting times for the selected race)";
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(883, 121);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(110, 23);
+            this.button2.TabIndex = 15;
+            this.button2.Text = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // reading
             // 
             this.ClientSize = new System.Drawing.Size(1006, 461);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.chkAddLap);
             this.Controls.Add(this.textBoxEventId);
-            this.Controls.Add(this.btnTransferRecords);
             this.Controls.Add(this.comboBoxEvents);
             this.Controls.Add(this.chkLogSpecificDistance);
             this.Controls.Add(this.dtpStartTime);
@@ -225,10 +225,10 @@
         private System.Windows.Forms.DateTimePicker dtpStartTime;
         private System.Windows.Forms.CheckBox chkLogSpecificDistance;
         private System.Windows.Forms.ComboBox comboBoxEvents;
-        private System.Windows.Forms.Button btnTransferRecords;
         private System.Windows.Forms.TextBox textBoxEventId;
         private System.Windows.Forms.CheckBox chkAddLap;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button button2;
     }
 }
