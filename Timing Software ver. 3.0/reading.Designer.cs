@@ -34,7 +34,7 @@
             this.chkAddLap = new System.Windows.Forms.CheckBox();
             this.button1 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
-            this.button2 = new System.Windows.Forms.Button();
+            this.publishtoremote = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -175,20 +175,20 @@
             this.label1.TabIndex = 14;
             this.label1.Text = "( NOT counting starting times for the selected race)";
             // 
-            // button2
+            // publishtoremote
             // 
-            this.button2.Location = new System.Drawing.Point(883, 121);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(110, 23);
-            this.button2.TabIndex = 15;
-            this.button2.Text = "button2";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.publishtoremote.Location = new System.Drawing.Point(892, 124);
+            this.publishtoremote.Name = "publishtoremote";
+            this.publishtoremote.Size = new System.Drawing.Size(102, 23);
+            this.publishtoremote.TabIndex = 16;
+            this.publishtoremote.Text = "Publish Results";
+            this.publishtoremote.UseVisualStyleBackColor = true;
+            this.publishtoremote.Click += new System.EventHandler(this.button3_Click);
             // 
             // reading
             // 
             this.ClientSize = new System.Drawing.Size(1006, 461);
-            this.Controls.Add(this.button2);
+            this.Controls.Add(this.publishtoremote);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.chkAddLap);
@@ -229,6 +229,6 @@
         private System.Windows.Forms.CheckBox chkAddLap;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button publishtoremote;
     }
 }

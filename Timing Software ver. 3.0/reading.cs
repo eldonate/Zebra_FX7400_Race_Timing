@@ -655,7 +655,7 @@ namespace RaceManager
             }
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void button3_Click(object sender, EventArgs e)
         {
             string remoteConnectionString = GetConnectionString("../../../../dbconfig.txt", true); // True for remote DB
 
@@ -673,6 +673,10 @@ namespace RaceManager
                             {
                                 remoteConn.Open();
 
+                                // No need to create the "results_zebra" table here since it should already exist
+                                // Ensure it has the necessary columns with ALTER TABLE if required
+
+                                // Insert data into the remote "results_zebra" table
                                 while (reader.Read())
                                 {
                                     using (var insertCmd = new MySqlCommand(
@@ -697,13 +701,12 @@ namespace RaceManager
                                         insertCmd.Parameters.AddWithValue("@elapsed_time", reader["elapsed_time"]);
                                         insertCmd.Parameters.AddWithValue("@position", reader["position"] != DBNull.Value ? reader["position"] : (object)DBNull.Value);
 
-                                        // Ensure category_position and gender_position are correctly handled
                                         var categoryPosition = reader["category_position"] != DBNull.Value ? reader["category_position"] : null;
                                         var genderPosition = reader["gender_position"] != DBNull.Value ? reader["gender_position"] : null;
 
                                         insertCmd.Parameters.AddWithValue("@category_position", categoryPosition != null ? categoryPosition : (object)DBNull.Value);
                                         insertCmd.Parameters.AddWithValue("@gender_position", genderPosition != null ? genderPosition : (object)DBNull.Value);
-                                        insertCmd.Parameters.AddWithValue("@event_id", textBoxEventId);
+                                        insertCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text)); // Add the event ID
 
                                         insertCmd.ExecuteNonQuery();
                                     }
@@ -713,11 +716,11 @@ namespace RaceManager
                     }
                 }
 
-                MessageBox.Show("Data synchronized successfully.");
+                MessageBox.Show("Data transferred successfully to the remote results_zebra table.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error synchronizing data: " + ex.Message);
+                MessageBox.Show("Error transferring data: " + ex.Message);
             }
         }
     }
