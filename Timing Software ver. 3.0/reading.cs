@@ -166,6 +166,7 @@ namespace RaceManager
                     var distanceName = reader["distance_name"].ToString();
                     var raceDate = (DateTime)reader["race_date"];
                     var category = reader["category"] != DBNull.Value ? reader["category"].ToString() : "Unknown";
+                    var bib = reader["bib"].ToString(); // Retrieve the bib value
 
                     // Check if logging for specific distance is enabled and if the RFID belongs to the selected distance
                     if (chkLogSpecificDistance.Checked && cmbDistances.SelectedValue != null)
@@ -239,8 +240,8 @@ namespace RaceManager
                     {
                         insertConn.Open();
                         var insertCmd = new MySqlCommand(
-                            "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position) " +
-                            "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position)",
+                            "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, bib) " + // Added bib here
+                            "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @bib)", // Added @bib here
                             insertConn);
                         insertCmd.Parameters.AddWithValue("@rfid", rfid);
                         insertCmd.Parameters.AddWithValue("@timestamp", timestamp);
@@ -260,11 +261,13 @@ namespace RaceManager
                         insertCmd.Parameters.AddWithValue("@position", position.HasValue ? (object)position.Value : DBNull.Value);
                         insertCmd.Parameters.AddWithValue("@category_position", categoryPosition.HasValue ? (object)categoryPosition.Value : DBNull.Value);
                         insertCmd.Parameters.AddWithValue("@gender_position", genderPosition.HasValue ? (object)genderPosition.Value : DBNull.Value);
+                        insertCmd.Parameters.AddWithValue("@bib", bib); // Set bib value here
                         insertCmd.ExecuteNonQuery();
                     }
                 }
             }
         }
+
         // New method to calculate the gender position
         private int CalculateGenderPosition(string rfid, string gender, string distanceName)
         {
@@ -673,15 +676,12 @@ namespace RaceManager
                             {
                                 remoteConn.Open();
 
-                                // No need to create the "results_zebra" table here since it should already exist
-                                // Ensure it has the necessary columns with ALTER TABLE if required
-
                                 // Insert data into the remote "results_zebra" table
                                 while (reader.Read())
                                 {
                                     using (var insertCmd = new MySqlCommand(
-                                        "INSERT INTO results_zebra (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, event_id) " +
-                                        "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @event_id)",
+                                        "INSERT INTO results_zebra (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, event_id, bib) " + // Added bib here
+                                        "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @event_id, @bib)", // Added @bib here
                                         remoteConn))
                                     {
                                         insertCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
@@ -707,6 +707,7 @@ namespace RaceManager
                                         insertCmd.Parameters.AddWithValue("@category_position", categoryPosition != null ? categoryPosition : (object)DBNull.Value);
                                         insertCmd.Parameters.AddWithValue("@gender_position", genderPosition != null ? genderPosition : (object)DBNull.Value);
                                         insertCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text)); // Add the event ID
+                                        insertCmd.Parameters.AddWithValue("@bib", reader["bib"]); // Add the bib value
 
                                         insertCmd.ExecuteNonQuery();
                                     }
@@ -723,5 +724,6 @@ namespace RaceManager
                 MessageBox.Show("Error transferring data: " + ex.Message);
             }
         }
+
     }
 }
