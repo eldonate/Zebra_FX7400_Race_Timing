@@ -676,40 +676,54 @@ namespace RaceManager
                             {
                                 remoteConn.Open();
 
-                                // Insert data into the remote "results_zebra" table
                                 while (reader.Read())
                                 {
-                                    using (var insertCmd = new MySqlCommand(
-                                        "INSERT INTO results_zebra (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, event_id, bib) " + // Added bib here
-                                        "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @event_id, @bib)", // Added @bib here
+                                    // Check if the record already exists
+                                    using (var checkCmd = new MySqlCommand(
+                                        "SELECT COUNT(*) FROM results_zebra WHERE rfid = @rfid AND timestamp = @timestamp AND event_id = @event_id",
                                         remoteConn))
                                     {
-                                        insertCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
-                                        insertCmd.Parameters.AddWithValue("@timestamp", reader["timestamp"]);
-                                        insertCmd.Parameters.AddWithValue("@gap", reader["gap"]);
-                                        insertCmd.Parameters.AddWithValue("@first_name", reader["first_name"]);
-                                        insertCmd.Parameters.AddWithValue("@last_name", reader["last_name"]);
-                                        insertCmd.Parameters.AddWithValue("@gender", reader["gender"]);
-                                        insertCmd.Parameters.AddWithValue("@birthday", reader["birthday"]);
-                                        insertCmd.Parameters.AddWithValue("@age", reader["age"]);
-                                        insertCmd.Parameters.AddWithValue("@race_name", reader["race_name"]);
-                                        insertCmd.Parameters.AddWithValue("@distance_name", reader["distance_name"]);
-                                        insertCmd.Parameters.AddWithValue("@race_date", reader["race_date"]);
-                                        insertCmd.Parameters.AddWithValue("@distance_laps", reader["distance_laps"]);
-                                        insertCmd.Parameters.AddWithValue("@distance_intervals", reader["distance_intervals"]);
-                                        insertCmd.Parameters.AddWithValue("@category", reader["category"]);
-                                        insertCmd.Parameters.AddWithValue("@elapsed_time", reader["elapsed_time"]);
-                                        insertCmd.Parameters.AddWithValue("@position", reader["position"] != DBNull.Value ? reader["position"] : (object)DBNull.Value);
+                                        checkCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
+                                        checkCmd.Parameters.AddWithValue("@timestamp", reader["timestamp"]);
+                                        checkCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text));
 
-                                        var categoryPosition = reader["category_position"] != DBNull.Value ? reader["category_position"] : null;
-                                        var genderPosition = reader["gender_position"] != DBNull.Value ? reader["gender_position"] : null;
+                                        int count = Convert.ToInt32(checkCmd.ExecuteScalar());
 
-                                        insertCmd.Parameters.AddWithValue("@category_position", categoryPosition != null ? categoryPosition : (object)DBNull.Value);
-                                        insertCmd.Parameters.AddWithValue("@gender_position", genderPosition != null ? genderPosition : (object)DBNull.Value);
-                                        insertCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text)); // Add the event ID
-                                        insertCmd.Parameters.AddWithValue("@bib", reader["bib"]); // Add the bib value
+                                        if (count == 0) // Record does not exist, so insert it
+                                        {
+                                            using (var insertCmd = new MySqlCommand(
+                                                "INSERT INTO results_zebra (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, event_id, bib) " +
+                                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @event_id, @bib)",
+                                                remoteConn))
+                                            {
+                                                insertCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
+                                                insertCmd.Parameters.AddWithValue("@timestamp", reader["timestamp"]);
+                                                insertCmd.Parameters.AddWithValue("@gap", reader["gap"]);
+                                                insertCmd.Parameters.AddWithValue("@first_name", reader["first_name"]);
+                                                insertCmd.Parameters.AddWithValue("@last_name", reader["last_name"]);
+                                                insertCmd.Parameters.AddWithValue("@gender", reader["gender"]);
+                                                insertCmd.Parameters.AddWithValue("@birthday", reader["birthday"]);
+                                                insertCmd.Parameters.AddWithValue("@age", reader["age"]);
+                                                insertCmd.Parameters.AddWithValue("@race_name", reader["race_name"]);
+                                                insertCmd.Parameters.AddWithValue("@distance_name", reader["distance_name"]);
+                                                insertCmd.Parameters.AddWithValue("@race_date", reader["race_date"]);
+                                                insertCmd.Parameters.AddWithValue("@distance_laps", reader["distance_laps"]);
+                                                insertCmd.Parameters.AddWithValue("@distance_intervals", reader["distance_intervals"]);
+                                                insertCmd.Parameters.AddWithValue("@category", reader["category"]);
+                                                insertCmd.Parameters.AddWithValue("@elapsed_time", reader["elapsed_time"]);
+                                                insertCmd.Parameters.AddWithValue("@position", reader["position"] != DBNull.Value ? reader["position"] : (object)DBNull.Value);
 
-                                        insertCmd.ExecuteNonQuery();
+                                                var categoryPosition = reader["category_position"] != DBNull.Value ? reader["category_position"] : null;
+                                                var genderPosition = reader["gender_position"] != DBNull.Value ? reader["gender_position"] : null;
+
+                                                insertCmd.Parameters.AddWithValue("@category_position", categoryPosition != null ? categoryPosition : (object)DBNull.Value);
+                                                insertCmd.Parameters.AddWithValue("@gender_position", genderPosition != null ? genderPosition : (object)DBNull.Value);
+                                                insertCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text));
+                                                insertCmd.Parameters.AddWithValue("@bib", reader["bib"]);
+
+                                                insertCmd.ExecuteNonQuery();
+                                            }
+                                        }
                                     }
                                 }
                             }

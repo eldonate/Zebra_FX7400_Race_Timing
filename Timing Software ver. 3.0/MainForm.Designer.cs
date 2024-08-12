@@ -40,6 +40,8 @@
             this.btnOpenReadingForm = new System.Windows.Forms.Button();
             this.btnNewParticipants = new System.Windows.Forms.Button();
             this.btnNewForm = new System.Windows.Forms.Button();
+            this.txtSplitNames = new System.Windows.Forms.TextBox();
+            this.addSplit = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txtRaceName
@@ -207,7 +209,7 @@
             // 
             // btnAddParticipant
             // 
-            this.btnAddParticipant.Location = new System.Drawing.Point(250, 356);
+            this.btnAddParticipant.Location = new System.Drawing.Point(250, 360);
             this.btnAddParticipant.Name = "btnAddParticipant";
             this.btnAddParticipant.Size = new System.Drawing.Size(200, 23);
             this.btnAddParticipant.TabIndex = 19;
@@ -217,7 +219,7 @@
             // 
             // btnOpenReadingForm
             // 
-            this.btnOpenReadingForm.Location = new System.Drawing.Point(250, 382);
+            this.btnOpenReadingForm.Location = new System.Drawing.Point(250, 386);
             this.btnOpenReadingForm.Name = "btnOpenReadingForm";
             this.btnOpenReadingForm.Size = new System.Drawing.Size(200, 23);
             this.btnOpenReadingForm.TabIndex = 20;
@@ -245,9 +247,28 @@
             this.btnNewForm.UseVisualStyleBackColor = true;
             this.btnNewForm.Click += new System.EventHandler(this.btnNewForm_Click);
             // 
+            // txtSplitNames
+            // 
+            this.txtSplitNames.Location = new System.Drawing.Point(12, 412);
+            this.txtSplitNames.Name = "txtSplitNames";
+            this.txtSplitNames.Size = new System.Drawing.Size(200, 20);
+            this.txtSplitNames.TabIndex = 23;
+            // 
+            // addSplit
+            // 
+            this.addSplit.Location = new System.Drawing.Point(12, 439);
+            this.addSplit.Name = "addSplit";
+            this.addSplit.Size = new System.Drawing.Size(200, 23);
+            this.addSplit.TabIndex = 24;
+            this.addSplit.Text = "button1";
+            this.addSplit.UseVisualStyleBackColor = true;
+            this.addSplit.Click += new System.EventHandler(this.addSplit_Click);
+            // 
             // MainForm
             // 
-            this.ClientSize = new System.Drawing.Size(464, 421);
+            this.ClientSize = new System.Drawing.Size(464, 484);
+            this.Controls.Add(this.addSplit);
+            this.Controls.Add(this.txtSplitNames);
             this.Controls.Add(this.btnNewForm);
             this.Controls.Add(this.btnNewParticipants);
             this.Controls.Add(this.btnOpenReadingForm);
@@ -303,5 +324,8 @@
         private System.Windows.Forms.Button btnNewForm; // Declare the new button
 
         #endregion
+
+        private System.Windows.Forms.TextBox txtSplitNames;
+        private System.Windows.Forms.Button addSplit;
     }
 }

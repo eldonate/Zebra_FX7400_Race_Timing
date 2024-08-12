@@ -1,6 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Data;
+using System.Data.SqlClient;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -254,6 +255,68 @@ namespace RaceManager
                 MySqlCommand cmd = new MySqlCommand("SELECT date FROM races WHERE id = @id", conn);
                 cmd.Parameters.AddWithValue("@id", raceId);
                 return (DateTime)cmd.ExecuteScalar();
+            }
+        }
+
+        private void addSplit_Click(object sender, EventArgs e)
+        {
+            // Ensure the race and distance are selected and split names are entered
+            if (cmbRaces.SelectedValue == null || cmbDistances.SelectedValue == null || string.IsNullOrEmpty(txtSplitNames.Text))
+            {
+                MessageBox.Show("Please select a race, a distance, and enter the split names.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Get race_name and distance_name from the ComboBoxes
+            string raceName = ((DataRowView)cmbRaces.SelectedItem)["name"].ToString().Trim();
+            string distanceName = ((DataRowView)cmbDistances.SelectedItem)["name"].ToString().Trim();
+            string newSplitNames = txtSplitNames.Text.Trim();
+
+            // Specify the delimiter
+            string delimiter = "|";
+
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+
+                // Check if there is an existing record for the given race_name and distance_name
+                MySqlCommand cmdCheck = new MySqlCommand(
+                    "SELECT split_names FROM race_splits WHERE race_name = @raceName AND distance_name = @distanceName", conn);
+                cmdCheck.Parameters.AddWithValue("@raceName", raceName);
+                cmdCheck.Parameters.AddWithValue("@distanceName", distanceName);
+
+                object existingSplitsObj = cmdCheck.ExecuteScalar();
+                string updatedSplits;
+
+                if (existingSplitsObj != null)
+                {
+                    // If the record exists, append the new split names to the existing ones
+                    string existingSplits = existingSplitsObj.ToString();
+                    updatedSplits = existingSplits + delimiter + newSplitNames;
+
+                    // Update the existing record with the new split names
+                    MySqlCommand cmdUpdate = new MySqlCommand(
+                        "UPDATE race_splits SET split_names = @splitNames WHERE race_name = @raceName AND distance_name = @distanceName", conn);
+                    cmdUpdate.Parameters.AddWithValue("@splitNames", updatedSplits);
+                    cmdUpdate.Parameters.AddWithValue("@raceName", raceName);
+                    cmdUpdate.Parameters.AddWithValue("@distanceName", distanceName);
+
+                    cmdUpdate.ExecuteNonQuery();
+                    MessageBox.Show("Split names successfully updated!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    // If the record does not exist, insert a new record
+                    MySqlCommand cmdInsert = new MySqlCommand(
+                        "INSERT INTO race_splits (race_name, distance_name, split_names) " +
+                        "VALUES (@raceName, @distanceName, @splitNames)", conn);
+                    cmdInsert.Parameters.AddWithValue("@raceName", raceName);
+                    cmdInsert.Parameters.AddWithValue("@distanceName", distanceName);
+                    cmdInsert.Parameters.AddWithValue("@splitNames", newSplitNames);
+
+                    cmdInsert.ExecuteNonQuery();
+                    MessageBox.Show("Split names successfully saved!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
         }
     }
