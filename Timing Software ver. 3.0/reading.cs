@@ -139,134 +139,165 @@ namespace RaceManager
 
         private void ProcessLine(string line)
         {
-            var parts = line.Split(',');
-            if (parts.Length < 3) return;
-
-            var gap = float.Parse(parts[0]);
-            var timestamp = DateTime.Parse(parts[1]);
-            var rfid = parts[2];
-
-            using (var conn = new MySqlConnection(connectionString))
+            try
             {
-                conn.Open();
-                var cmd = new MySqlCommand("SELECT * FROM runners WHERE rfid = @rfid", conn);
-                cmd.Parameters.AddWithValue("@rfid", rfid);
-                var reader = cmd.ExecuteReader();
-                if (reader.Read())
+                var parts = line.Split(',');
+                if (parts.Length < 3)
                 {
-                    var distanceIntervals = Convert.ToInt32(reader["distance_intervals"]);
-                    var distanceLaps = Convert.ToInt32(reader["distance_laps"]);
-                    var distanceId = (int)reader["distance_id"];
-                    var firstName = reader["first_name"].ToString();
-                    var lastName = reader["last_name"].ToString();
-                    var gender = reader["gender"].ToString();
-                    var birthday = (DateTime)reader["birthday"];
-                    var age = (int)reader["age"];
-                    var raceName = reader["race_name"].ToString();
-                    var distanceName = reader["distance_name"].ToString();
-                    var raceDate = (DateTime)reader["race_date"];
-                    var category = reader["category"] != DBNull.Value ? reader["category"].ToString() : "Unknown";
-                    var bib = reader["bib"].ToString(); // Retrieve the bib value
+                    return; // No notification needed, just skip the line.
+                }
 
-                    // Check if logging for specific distance is enabled and if the RFID belongs to the selected distance
-                    if (chkLogSpecificDistance.Checked && cmbDistances.SelectedValue != null)
+                // Attempt to parse the gap (float) and timestamp (DateTime)
+                if (!float.TryParse(parts[0], out var gap))
+                {
+                    NotifyUser($"Invalid gap value: {parts[0]}");
+                    return; // Skip processing this line
+                }
+
+                if (!DateTime.TryParse(parts[1], out var timestamp))
+                {
+                    NotifyUser($"Invalid timestamp value: {parts[1]}");
+                    return; // Skip processing this line
+                }
+
+                var rfid = parts[2];
+
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    var cmd = new MySqlCommand("SELECT * FROM runners WHERE rfid = @rfid", conn);
+                    cmd.Parameters.AddWithValue("@rfid", rfid);
+                    var reader = cmd.ExecuteReader();
+                    if (reader.Read())
                     {
-                        int selectedDistanceId = (int)cmbDistances.SelectedValue;
-                        if (distanceId != selectedDistanceId)
+                        // Continue processing if data retrieval is successful
+                        var distanceIntervals = Convert.ToInt32(reader["distance_intervals"]);
+                        var distanceLaps = Convert.ToInt32(reader["distance_laps"]);
+                        var distanceId = (int)reader["distance_id"];
+                        var firstName = reader["first_name"].ToString();
+                        var lastName = reader["last_name"].ToString();
+                        var gender = reader["gender"].ToString();
+                        var birthday = (DateTime)reader["birthday"];
+                        var age = (int)reader["age"];
+                        var raceName = reader["race_name"].ToString();
+                        var distanceName = reader["distance_name"].ToString();
+                        var raceDate = (DateTime)reader["race_date"];
+                        var category = reader["category"] != DBNull.Value ? reader["category"].ToString() : "Unknown";
+                        var bib = reader["bib"].ToString();
+
+                        if (chkLogSpecificDistance.Checked && cmbDistances.SelectedValue != null)
+                        {
+                            int selectedDistanceId = (int)cmbDistances.SelectedValue;
+                            if (distanceId != selectedDistanceId)
+                            {
+                                reader.Close();
+                                return;
+                            }
+                        }
+
+                        if (lastReadTimes.ContainsKey(rfid) && (timestamp - lastReadTimes[rfid]).TotalSeconds < distanceIntervals)
                         {
                             reader.Close();
                             return;
                         }
-                    }
 
-                    // Check if the RFID has been read recently within the distance_intervals
-                    if (lastReadTimes.ContainsKey(rfid) && (timestamp - lastReadTimes[rfid]).TotalSeconds < distanceIntervals)
-                    {
+                        if (chkAddLap.Checked)
+                        {
+                            distanceLaps += 1;
+                        }
+
+                        if (remainingLaps.ContainsKey(rfid))
+                        {
+                            if (remainingLaps[rfid] == 0)
+                            {
+                                reader.Close();
+                                return;
+                            }
+
+                            remainingLaps[rfid]--;
+                        }
+                        else
+                        {
+                            remainingLaps[rfid] = distanceLaps - 1;
+                        }
+
+                        lastReadTimes[rfid] = timestamp;
+
+                        int? position = null;
+                        int? categoryPosition = null;
+                        int? genderPosition = null;
+                        if (distanceLaps == 1 || remainingLaps[rfid] == 0)
+                        {
+                            position = CalculateOverallPosition(rfid, distanceName, distanceLaps);
+                            categoryPosition = CalculateCategoryPosition(rfid, category, gender, distanceName);
+                            genderPosition = CalculateGenderPosition(rfid, gender, distanceName);
+                        }
+
                         reader.Close();
-                        return;
-                    }
 
-                    // Adjust laps if the CheckBox is checked
-                    if (chkAddLap.Checked)
-                    {
-                        distanceLaps += 1;
-                    }
-
-                    // Check and update the remaining laps for the RFID
-                    if (remainingLaps.ContainsKey(rfid))
-                    {
-                        if (remainingLaps[rfid] == 0)
+                        var startTimeCmd = new MySqlCommand("SELECT start_time FROM distances WHERE id = @id", conn);
+                        startTimeCmd.Parameters.AddWithValue("@id", distanceId);
+                        var result = startTimeCmd.ExecuteScalar();
+                        string elapsedTime = "00:00:00:00"; // Default elapsed time if start_time is null
+                        if (result != null && result != DBNull.Value)
                         {
-                            reader.Close();
-                            return;
+                            DateTime startTime = (DateTime)result;
+                            TimeSpan timeDiff = timestamp - startTime;
+                            elapsedTime = $"{timeDiff.Days:D2}:{timeDiff.Hours:D2}:{timeDiff.Minutes:D2}:{timeDiff.Seconds:D2}";
                         }
 
-                        remainingLaps[rfid]--;
+                        using (var insertConn = new MySqlConnection(connectionString))
+                        {
+                            insertConn.Open();
+                            var insertCmd = new MySqlCommand(
+                                "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, bib) " +
+                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @bib)",
+                                insertConn);
+                            insertCmd.Parameters.AddWithValue("@rfid", rfid);
+                            insertCmd.Parameters.AddWithValue("@timestamp", timestamp);
+                            insertCmd.Parameters.AddWithValue("@gap", gap);
+                            insertCmd.Parameters.AddWithValue("@first_name", firstName);
+                            insertCmd.Parameters.AddWithValue("@last_name", lastName);
+                            insertCmd.Parameters.AddWithValue("@gender", gender);
+                            insertCmd.Parameters.AddWithValue("@birthday", birthday);
+                            insertCmd.Parameters.AddWithValue("@age", age);
+                            insertCmd.Parameters.AddWithValue("@race_name", raceName);
+                            insertCmd.Parameters.AddWithValue("@distance_name", distanceName);
+                            insertCmd.Parameters.AddWithValue("@race_date", raceDate);
+                            insertCmd.Parameters.AddWithValue("@distance_laps", distanceLaps);
+                            insertCmd.Parameters.AddWithValue("@distance_intervals", distanceIntervals);
+                            insertCmd.Parameters.AddWithValue("@category", category);
+                            insertCmd.Parameters.AddWithValue("@elapsed_time", elapsedTime);
+                            insertCmd.Parameters.AddWithValue("@position", position.HasValue ? (object)position.Value : DBNull.Value);
+                            insertCmd.Parameters.AddWithValue("@category_position", categoryPosition.HasValue ? (object)categoryPosition.Value : DBNull.Value);
+                            insertCmd.Parameters.AddWithValue("@gender_position", genderPosition.HasValue ? (object)genderPosition.Value : DBNull.Value);
+                            insertCmd.Parameters.AddWithValue("@bib", bib);
+                            insertCmd.ExecuteNonQuery();
+                        }
                     }
                     else
                     {
-                        remainingLaps[rfid] = distanceLaps - 1;
-                    }
-
-                    lastReadTimes[rfid] = timestamp;
-
-                    // Calculate the position, category_position, and gender_position for the current RFID and distance if it's the last lap
-                    int? position = null;
-                    int? categoryPosition = null;
-                    int? genderPosition = null;
-                    if (distanceLaps == 1 || remainingLaps[rfid] == 0)
-                    {
-                        position = CalculateOverallPosition(rfid, distanceName, distanceLaps);
-                        categoryPosition = CalculateCategoryPosition(rfid, category, gender, distanceName);
-                        genderPosition = CalculateGenderPosition(rfid, gender, distanceName);
-                    }
-
-                    // Close the reader before opening a new one
-                    reader.Close();
-
-                    // Calculate elapsed time
-                    var startTimeCmd = new MySqlCommand("SELECT start_time FROM distances WHERE id = @id", conn);
-                    startTimeCmd.Parameters.AddWithValue("@id", distanceId);
-                    var result = startTimeCmd.ExecuteScalar();
-                    string elapsedTime = "00:00:00:00"; // Default elapsed time if start_time is null
-                    if (result != null && result != DBNull.Value)
-                    {
-                        DateTime startTime = (DateTime)result;
-                        TimeSpan timeDiff = timestamp - startTime;
-                        elapsedTime = $"{timeDiff.Days:D2}:{timeDiff.Hours:D2}:{timeDiff.Minutes:D2}:{timeDiff.Seconds:D2}";
-                    }
-
-                    using (var insertConn = new MySqlConnection(connectionString))
-                    {
-                        insertConn.Open();
-                        var insertCmd = new MySqlCommand(
-                            "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, bib) " + // Added bib here
-                            "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @bib)", // Added @bib here
-                            insertConn);
-                        insertCmd.Parameters.AddWithValue("@rfid", rfid);
-                        insertCmd.Parameters.AddWithValue("@timestamp", timestamp);
-                        insertCmd.Parameters.AddWithValue("@gap", gap);
-                        insertCmd.Parameters.AddWithValue("@first_name", firstName);
-                        insertCmd.Parameters.AddWithValue("@last_name", lastName);
-                        insertCmd.Parameters.AddWithValue("@gender", gender);
-                        insertCmd.Parameters.AddWithValue("@birthday", birthday);
-                        insertCmd.Parameters.AddWithValue("@age", age);
-                        insertCmd.Parameters.AddWithValue("@race_name", raceName);
-                        insertCmd.Parameters.AddWithValue("@distance_name", distanceName);
-                        insertCmd.Parameters.AddWithValue("@race_date", raceDate);
-                        insertCmd.Parameters.AddWithValue("@distance_laps", distanceLaps);
-                        insertCmd.Parameters.AddWithValue("@distance_intervals", distanceIntervals);
-                        insertCmd.Parameters.AddWithValue("@category", category);
-                        insertCmd.Parameters.AddWithValue("@elapsed_time", elapsedTime);
-                        insertCmd.Parameters.AddWithValue("@position", position.HasValue ? (object)position.Value : DBNull.Value);
-                        insertCmd.Parameters.AddWithValue("@category_position", categoryPosition.HasValue ? (object)categoryPosition.Value : DBNull.Value);
-                        insertCmd.Parameters.AddWithValue("@gender_position", genderPosition.HasValue ? (object)genderPosition.Value : DBNull.Value);
-                        insertCmd.Parameters.AddWithValue("@bib", bib); // Set bib value here
-                        insertCmd.ExecuteNonQuery();
+                        // No runner found, but no notification needed.
                     }
                 }
             }
+            catch (FormatException ex)
+            {
+                NotifyUser($"Data format error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Handle any other unexpected errors.
+                NotifyUser($"Unexpected error: {ex.Message}");
+            }
         }
+
+        private void NotifyUser(string message)
+        {
+            // Implementation to notify the user (e.g., MessageBox, log, etc.)
+            MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
 
         // New method to calculate the gender position
         private int CalculateGenderPosition(string rfid, string gender, string distanceName)
