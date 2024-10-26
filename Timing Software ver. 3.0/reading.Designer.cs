@@ -35,6 +35,7 @@
             this.button1 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.publishtoremote = new System.Windows.Forms.Button();
+            this.ReaderPosition = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -185,9 +186,17 @@
             this.publishtoremote.UseVisualStyleBackColor = true;
             this.publishtoremote.Click += new System.EventHandler(this.button3_Click);
             // 
+            // ReaderPosition
+            // 
+            this.ReaderPosition.Location = new System.Drawing.Point(667, 98);
+            this.ReaderPosition.Name = "ReaderPosition";
+            this.ReaderPosition.Size = new System.Drawing.Size(158, 20);
+            this.ReaderPosition.TabIndex = 17;
+            // 
             // reading
             // 
             this.ClientSize = new System.Drawing.Size(1006, 461);
+            this.Controls.Add(this.ReaderPosition);
             this.Controls.Add(this.publishtoremote);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.button1);
@@ -230,5 +239,6 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button publishtoremote;
+        private System.Windows.Forms.TextBox ReaderPosition;
     }
 }
