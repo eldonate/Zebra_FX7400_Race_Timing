@@ -699,6 +699,17 @@ namespace RaceManager
                 {
                     localConn.Open();
 
+                    // Update `split_name` in local `results` table based on `ReaderPosition` textbox value
+                    string readerPosition = ReaderPosition.Text;
+                    if (!string.IsNullOrEmpty(readerPosition))
+                    {
+                        using (var updateCmd = new MySqlCommand("UPDATE results SET split_name = @split_name WHERE split_name IS NULL OR split_name = ''", localConn))
+                        {
+                            updateCmd.Parameters.AddWithValue("@split_name", readerPosition);
+                            updateCmd.ExecuteNonQuery();
+                        }
+                    }
+
                     using (var cmd = new MySqlCommand("SELECT * FROM results", localConn))
                     {
                         using (var reader = cmd.ExecuteReader())
@@ -723,8 +734,8 @@ namespace RaceManager
                                         if (count == 0) // Record does not exist, so insert it
                                         {
                                             using (var insertCmd = new MySqlCommand(
-                                                "INSERT INTO results_zebra (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, event_id, bib) " +
-                                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @event_id, @bib)",
+                                                "INSERT INTO results_zebra (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, event_id, bib, split_name) " +
+                                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @event_id, @bib, @split_name)",
                                                 remoteConn))
                                             {
                                                 insertCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
@@ -751,6 +762,7 @@ namespace RaceManager
                                                 insertCmd.Parameters.AddWithValue("@gender_position", genderPosition != null ? genderPosition : (object)DBNull.Value);
                                                 insertCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text));
                                                 insertCmd.Parameters.AddWithValue("@bib", reader["bib"]);
+                                                insertCmd.Parameters.AddWithValue("@split_name", reader["split_name"]);
 
                                                 insertCmd.ExecuteNonQuery();
                                             }
