@@ -235,19 +235,6 @@ namespace RaceManager
 
                         reader.Close();
 
-                        // New Check: Verify if RFID already has a non-null position, category_position, or gender_position
-                        var checkCmd = new MySqlCommand(
-                            "SELECT COUNT(*) FROM results WHERE rfid = @rfid AND (position IS NOT NULL OR category_position IS NOT NULL OR gender_position IS NOT NULL)",
-                            conn);
-                        checkCmd.Parameters.AddWithValue("@rfid", rfid);
-                        var existingRecordCount = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-                        if (existingRecordCount > 0)
-                        {
-                            // If the RFID already has a non-null position, category_position, or gender_position, skip the insertion.
-                            return;
-                        }
-
                         var startTimeCmd = new MySqlCommand("SELECT start_time FROM distances WHERE id = @id", conn);
                         startTimeCmd.Parameters.AddWithValue("@id", distanceId);
                         var result = startTimeCmd.ExecuteScalar();
@@ -304,8 +291,6 @@ namespace RaceManager
                 NotifyUser($"Unexpected error: {ex.Message}");
             }
         }
-
-
 
         private void NotifyUser(string message)
         {
