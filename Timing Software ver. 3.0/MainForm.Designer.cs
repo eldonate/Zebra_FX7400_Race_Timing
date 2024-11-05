@@ -42,6 +42,7 @@
             this.btnNewForm = new System.Windows.Forms.Button();
             this.txtSplitNames = new System.Windows.Forms.TextBox();
             this.addSplit = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txtRaceName
@@ -264,9 +265,20 @@
             this.addSplit.UseVisualStyleBackColor = true;
             this.addSplit.Click += new System.EventHandler(this.addSplit_Click);
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(250, 307);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(200, 23);
+            this.button1.TabIndex = 25;
+            this.button1.Text = "Time Trial";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // MainForm
             // 
             this.ClientSize = new System.Drawing.Size(464, 484);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.addSplit);
             this.Controls.Add(this.txtSplitNames);
             this.Controls.Add(this.btnNewForm);
@@ -327,5 +339,6 @@
 
         private System.Windows.Forms.TextBox txtSplitNames;
         private System.Windows.Forms.Button addSplit;
+        private System.Windows.Forms.Button button1;
     }
 }

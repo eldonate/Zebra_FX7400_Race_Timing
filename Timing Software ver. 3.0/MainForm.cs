@@ -319,5 +319,11 @@ namespace RaceManager
                 }
             }
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            timetrial secondForm = new timetrial();
+            secondForm.Show(); // Use ShowDialog() if you want the first form to be inactive until the second one closes
+        }
     }
 }

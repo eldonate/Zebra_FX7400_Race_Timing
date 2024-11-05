@@ -130,6 +130,10 @@
     <Compile Include="ReadingForm.Designer.cs">
       <DependentUpon>ReadingForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="timetrial.cs" />
+    <Compile Include="timetrial.Designer.cs">
+      <DependentUpon>timetrial.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -153,6 +157,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ReadingForm.resx">
       <DependentUpon>ReadingForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="timetrial.resx">
+      <DependentUpon>timetrial.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
