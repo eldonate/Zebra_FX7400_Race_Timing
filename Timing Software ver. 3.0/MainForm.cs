@@ -1,5 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
@@ -282,5 +283,69 @@ namespace RaceManager
                 MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private string GetConfigValue(string key, string configFilePath)
+        {
+            if (!File.Exists(configFilePath))
+                throw new FileNotFoundException("Configuration file not found.");
+
+            foreach (var line in File.ReadLines(configFilePath))
+            {
+                if (line.StartsWith(key + "=") && !line.TrimStart().StartsWith("#")) // Skip commented lines
+                {
+                    string value = line.Substring(key.Length + 1).Trim();
+                    Console.WriteLine($"Key: {key}, Value: {value}"); // Debug output
+                    return value;
+                }
+            }
+            throw new KeyNotFoundException($"Key '{key}' not found in the configuration file.");
+        }
+        private void button3_Click(object sender, EventArgs e)
+        {
+            OpenExecutable("zebra_reader_path");
+        }
+        private void button4_Click(object sender, EventArgs e)
+        {
+            OpenExecutable("writer_path");
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            OpenExecutable("heidisql_path");
+        }
+        private void OpenExecutable(string configKey)
+        {
+            try
+            {
+                string configFilePath = Path.GetFullPath("../../../../dbconfig.txt");
+                string relativePath = GetConfigValue(configKey, configFilePath);
+                string executablePath = Path.GetFullPath(relativePath); // Resolve to absolute path
+
+                Console.WriteLine($"Resolved path for {configKey}: {executablePath}"); // Debug log
+
+                if (!File.Exists(executablePath))
+                {
+                    MessageBox.Show($"Executable not found at the specified path: {executablePath}",
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                Process.Start(executablePath);
+            }
+            catch (FileNotFoundException fnfEx)
+            {
+                MessageBox.Show(fnfEx.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (KeyNotFoundException knfEx)
+            {
+                MessageBox.Show(knfEx.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open executable: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+
     }
 }

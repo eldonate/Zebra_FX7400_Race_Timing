@@ -42,6 +42,9 @@
             this.btnNewForm = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txtRaceName
@@ -209,7 +212,7 @@
             // 
             // btnAddParticipant
             // 
-            this.btnAddParticipant.Location = new System.Drawing.Point(250, 410);
+            this.btnAddParticipant.Location = new System.Drawing.Point(12, 425);
             this.btnAddParticipant.Name = "btnAddParticipant";
             this.btnAddParticipant.Size = new System.Drawing.Size(200, 23);
             this.btnAddParticipant.TabIndex = 19;
@@ -219,7 +222,7 @@
             // 
             // btnOpenReadingForm
             // 
-            this.btnOpenReadingForm.Location = new System.Drawing.Point(250, 439);
+            this.btnOpenReadingForm.Location = new System.Drawing.Point(12, 449);
             this.btnOpenReadingForm.Name = "btnOpenReadingForm";
             this.btnOpenReadingForm.Size = new System.Drawing.Size(200, 23);
             this.btnOpenReadingForm.TabIndex = 20;
@@ -267,9 +270,42 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(250, 382);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(200, 23);
+            this.button3.TabIndex = 27;
+            this.button3.Text = "Open Reader";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(250, 412);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(200, 23);
+            this.button4.TabIndex = 28;
+            this.button4.Text = "Open Writer";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(250, 441);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(200, 23);
+            this.button5.TabIndex = 29;
+            this.button5.Text = "Open HeidiSQL";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
             // MainForm
             // 
             this.ClientSize = new System.Drawing.Size(464, 484);
+            this.Controls.Add(this.button5);
+            this.Controls.Add(this.button4);
+            this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.btnNewForm);
@@ -329,5 +365,8 @@
         #endregion
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button5;
     }
 }
