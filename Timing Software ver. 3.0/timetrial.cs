@@ -18,6 +18,7 @@ namespace Timing_Software_ver._3._0
         public bool IsExpectingFirstRead { get; set; }
         public DateTime FirstReadTimestamp { get; set; }
         public DateTime LastProcessedTimestamp { get; set; } // For distance_intervals check
+        public bool IsDisqualified { get; set; } // Indicates if the runner is disqualified
 
         public RunnerState()
         {
@@ -25,6 +26,7 @@ namespace Timing_Software_ver._3._0
             IsExpectingFirstRead = true;
             FirstReadTimestamp = DateTime.MinValue;
             LastProcessedTimestamp = DateTime.MinValue;
+            IsDisqualified = false;
         }
     }
 
@@ -45,10 +47,10 @@ namespace Timing_Software_ver._3._0
         public timetrial()
         {
             InitializeComponent();
-            connectionString = GetConnectionString("../../../../dbconfig.txt", false);
+            connectionString = GetConnectionString("dbconfig.txt", false);
             cancellationTokenSource = new CancellationTokenSource();
             lastPosition = 0;
-            soundPlayer = new SoundPlayer("../../../../beep.wav");
+            soundPlayer = new SoundPlayer("beep.wav");
             runnerStates = new Dictionary<string, RunnerState>();
             currentLapNumber = 1; // Initialize lap number to 1
             textBoxLapNumber.Text = currentLapNumber.ToString();
@@ -60,9 +62,6 @@ namespace Timing_Software_ver._3._0
         /// <summary>
         /// Reads the connection string from the configuration file.
         /// </summary>
-        /// <param name="configFile">Path to the configuration file.</param>
-        /// <param name="isRemote">Indicates if the connection is remote.</param>
-        /// <returns>Connection string.</returns>
         private string GetConnectionString(string configFile, bool isRemote)
         {
             var lines = File.ReadAllLines(configFile);
@@ -267,8 +266,25 @@ namespace Timing_Software_ver._3._0
 
                         RunnerState state = runnerStates[rfid];
 
+                        // Check if the runner is disqualified
+                        if (state.IsDisqualified)
+                        {
+                            // Runner has missed a lap previously, ignore
+                            return;
+                        }
+
+                        // Check if the runner has missed a lap
+                        if (state.LastLapProcessed < currentLapNumber - 1)
+                        {
+                            // Runner has missed a lap, disqualify them
+                            state.IsDisqualified = true;
+                            // Optionally, log or notify about the disqualification
+                            LogDisqualification(rfid, state.LastLapProcessed, currentLapNumber);
+                            return;
+                        }
+
                         // Check if we can process this RFID for the current lap
-                        if (state.LastLapProcessed < currentLapNumber)
+                        if (state.LastLapProcessed == currentLapNumber - 1)
                         {
                             // Distance interval check
                             if (state.LastProcessedTimestamp != DateTime.MinValue)
@@ -335,7 +351,7 @@ namespace Timing_Software_ver._3._0
                         }
                         else
                         {
-                            // Already processed this lap for this RFID
+                            // Runner has already processed this lap or missed a lap (handled above)
                             return;
                         }
                     }
@@ -345,6 +361,18 @@ namespace Timing_Software_ver._3._0
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Logs the disqualification of a runner.
+        /// </summary>
+        private void LogDisqualification(string rfid, int lastLapProcessed, int currentLap)
+        {
+            string message = $"Runner with RFID {rfid} has been disqualified. Last completed lap: {lastLapProcessed}, current lap: {currentLap}.";
+            // Optionally write to a log file or display a message
+            // For demonstration, we'll write to the console
+            Console.WriteLine(message);
+            // You could also display in a UI element like a list box or status label
         }
 
         /// <summary>
@@ -398,12 +426,22 @@ namespace Timing_Software_ver._3._0
         /// Increments the global lap number when the button is clicked.
         /// </summary>
         private void IncrementLapButton_Click(object sender, EventArgs e)
+{
+    currentLapNumber += 1;
+    textBoxLapNumber.Text = currentLapNumber.ToString();
+    labelCurrentLap.Text = $"Current Lap: {currentLapNumber}";
+    MessageBox.Show($"Lap number incremented to {currentLapNumber}", "Lap Incremented", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+    // Reset LastProcessedTimestamp for all runners
+    lock (runnerStates)
+    {
+        foreach (var state in runnerStates.Values)
         {
-            currentLapNumber += 1;
-            textBoxLapNumber.Text = currentLapNumber.ToString();
-            labelCurrentLap.Text = $"Current Lap: {currentLapNumber}";
-            MessageBox.Show($"Lap number incremented to {currentLapNumber}", "Lap Incremented", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            state.LastProcessedTimestamp = DateTime.MinValue;
         }
+    }
+}
+
 
         /// <summary>
         /// Updates the lap number when the textbox value changes.
