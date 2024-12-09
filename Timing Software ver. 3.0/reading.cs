@@ -165,12 +165,18 @@ namespace RaceManager
                 using (var conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    var cmd = new MySqlCommand("SELECT * FROM runners WHERE rfid = @rfid", conn);
+                    // Updated SQL query to include 'team'
+                    var cmd = new MySqlCommand(
+                        "SELECT distance_intervals, distance_laps, distance_id, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, category, bib, team FROM runners WHERE rfid = @rfid",
+                        conn);
                     cmd.Parameters.AddWithValue("@rfid", rfid);
                     var reader = cmd.ExecuteReader();
                     if (reader.Read())
                     {
-                        // Continue processing if data retrieval is successful
+                        // Retrieve 'team' from the runners table
+                        var team = reader["team"] != DBNull.Value ? reader["team"].ToString() : "Individual";
+
+                        // Existing data retrieval
                         var distanceIntervals = Convert.ToInt32(reader["distance_intervals"]);
                         var distanceLaps = Convert.ToInt32(reader["distance_laps"]);
                         var distanceId = (int)reader["distance_id"];
@@ -249,10 +255,13 @@ namespace RaceManager
                         using (var insertConn = new MySqlConnection(connectionString))
                         {
                             insertConn.Open();
+                            // Updated INSERT statement to include 'team'
                             var insertCmd = new MySqlCommand(
-                                "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, bib) " +
-                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @bib)",
+                                "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, bib, team) " +
+                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @bib, @team)",
                                 insertConn);
+
+                            // Existing parameter assignments
                             insertCmd.Parameters.AddWithValue("@rfid", rfid);
                             insertCmd.Parameters.AddWithValue("@timestamp", timestamp);
                             insertCmd.Parameters.AddWithValue("@gap", gap);
@@ -272,6 +281,10 @@ namespace RaceManager
                             insertCmd.Parameters.AddWithValue("@category_position", categoryPosition.HasValue ? (object)categoryPosition.Value : DBNull.Value);
                             insertCmd.Parameters.AddWithValue("@gender_position", genderPosition.HasValue ? (object)genderPosition.Value : DBNull.Value);
                             insertCmd.Parameters.AddWithValue("@bib", bib);
+
+                            // **New Parameter:** Adding 'team' to the INSERT command
+                            insertCmd.Parameters.AddWithValue("@team", team);
+
                             insertCmd.ExecuteNonQuery();
                         }
                     }
@@ -291,6 +304,7 @@ namespace RaceManager
                 NotifyUser($"Unexpected error: {ex.Message}");
             }
         }
+
 
         private void NotifyUser(string message)
         {
@@ -565,16 +579,6 @@ namespace RaceManager
             }
         }
 
-
-
-        
-
-
-
-
-
-
-
         private void button1_Click(object sender, EventArgs e)
         {
             if (cmbRaces.SelectedValue == null || cmbDistances.SelectedValue == null)
@@ -624,10 +628,9 @@ namespace RaceManager
                 {
                     conn.Open();
 
-                    // Fetch runners with the matching distance_name
+                    // Updated SQL query to include 'bib' and 'team'
                     var cmdGetRunners = new MySqlCommand(
-                        "SELECT rfid, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category " +
-                        "FROM runners WHERE distance_name = @distance_name", conn);
+                        "SELECT rfid, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, bib, team FROM runners WHERE distance_name = @distance_name", conn);
                     cmdGetRunners.Parameters.AddWithValue("@distance_name", distanceName);
 
                     var reader = cmdGetRunners.ExecuteReader();
@@ -645,6 +648,10 @@ namespace RaceManager
                         int distanceIntervals = (int)reader["distance_intervals"];
                         string category = reader["category"] != DBNull.Value ? reader["category"].ToString() : "Unknown";
 
+                        // Retrieve 'bib' and 'team' from the runners table
+                        var bib = reader["bib"] != DBNull.Value ? reader["bib"].ToString() : string.Empty;
+                        var team = reader["team"] != DBNull.Value ? reader["team"].ToString() : "Individual";
+
                         // Calculate the elapsed time based on the start_time and the start_time itself (as the timestamp)
                         TimeSpan elapsedTimeSpan = startTime.Value - startTime.Value;
                         string elapsedTime = $"{elapsedTimeSpan.Days:D2}:{elapsedTimeSpan.Hours:D2}:{elapsedTimeSpan.Minutes:D2}:{elapsedTimeSpan.Seconds:D2}";
@@ -652,9 +659,10 @@ namespace RaceManager
                         using (var insertConn = new MySqlConnection(connectionString))
                         {
                             insertConn.Open();
+                            // Updated INSERT statement to include 'bib' and 'team'
                             var insertCmd = new MySqlCommand(
-                                "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position) " +
-                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position)",
+                                "INSERT INTO results (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, bib, team) " +
+                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @bib, @team)",
                                 insertConn);
 
                             insertCmd.Parameters.AddWithValue("@rfid", rfid);
@@ -675,6 +683,8 @@ namespace RaceManager
                             insertCmd.Parameters.AddWithValue("@position", DBNull.Value); // Position is null for this entry
                             insertCmd.Parameters.AddWithValue("@category_position", DBNull.Value); // Category position is null for this entry
                             insertCmd.Parameters.AddWithValue("@gender_position", DBNull.Value); // Gender position is null for this entry
+                            insertCmd.Parameters.AddWithValue("@bib", bib); // Added 'bib' parameter
+                            insertCmd.Parameters.AddWithValue("@team", team); // Added 'team' parameter
 
                             insertCmd.ExecuteNonQuery();
                         }
@@ -688,6 +698,7 @@ namespace RaceManager
                 MessageBox.Show("Error adding lap to all participants: " + ex.Message);
             }
         }
+
 
         private void button3_Click(object sender, EventArgs e)
         {
@@ -734,10 +745,11 @@ namespace RaceManager
                                         if (count == 0) // Record does not exist, so insert it
                                         {
                                             using (var insertCmd = new MySqlCommand(
-                                                "INSERT INTO results_zebra (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, event_id, bib, split_name) " +
-                                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @event_id, @bib, @split_name)",
+                                                "INSERT INTO results_zebra (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, category, elapsed_time, position, category_position, gender_position, event_id, bib, split_name, team) " +
+                                                "VALUES (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals, @category, @elapsed_time, @position, @category_position, @gender_position, @event_id, @bib, @split_name, @team)",
                                                 remoteConn))
                                             {
+                                                // Add parameters for insertion
                                                 insertCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
                                                 insertCmd.Parameters.AddWithValue("@timestamp", reader["timestamp"]);
                                                 insertCmd.Parameters.AddWithValue("@gap", reader["gap"]);
@@ -764,6 +776,9 @@ namespace RaceManager
                                                 insertCmd.Parameters.AddWithValue("@bib", reader["bib"]);
                                                 insertCmd.Parameters.AddWithValue("@split_name", reader["split_name"]);
 
+                                                // Add the 'team' parameter
+                                                insertCmd.Parameters.AddWithValue("@team", reader["team"]);
+
                                                 insertCmd.ExecuteNonQuery();
                                             }
                                         }
@@ -781,6 +796,7 @@ namespace RaceManager
                 MessageBox.Show("Error transferring data: " + ex.Message);
             }
         }
+
 
     }
 }

@@ -163,13 +163,21 @@ namespace RaceManager
             {
                 connection.Open();
                 MySqlCommand command = new MySqlCommand(
-                    "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id, category) " +
-                    "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId, @Category)", connection);
+                    "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id, category, team) " +
+                    "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId, @Category, @Team)", connection);
 
-                command.Parameters.AddWithValue("@Rfid", txtRfid.Text);
-                command.Parameters.AddWithValue("@Bib", int.Parse(txtBib.Text));
-                command.Parameters.AddWithValue("@FirstName", txtFirstName.Text);
-                command.Parameters.AddWithValue("@LastName", txtLastName.Text);
+                command.Parameters.AddWithValue("@Rfid", txtRfid.Text.Trim());
+
+                // Ensure that the Bib is a valid integer
+                if (!int.TryParse(txtBib.Text.Trim(), out int bibNumber))
+                {
+                    MessageBox.Show("Bib number must be a valid integer.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                command.Parameters.AddWithValue("@Bib", bibNumber);
+
+                command.Parameters.AddWithValue("@FirstName", txtFirstName.Text.Trim());
+                command.Parameters.AddWithValue("@LastName", txtLastName.Text.Trim());
                 command.Parameters.AddWithValue("@Gender", cmbGender.SelectedItem.ToString());
                 command.Parameters.AddWithValue("@Birthday", dtpBirthday.Value);
                 command.Parameters.AddWithValue("@Age", age);
@@ -181,8 +189,19 @@ namespace RaceManager
                 command.Parameters.AddWithValue("@DistanceId", (int)selectedDistance["id"]);
                 command.Parameters.AddWithValue("@Category", categoryName);
 
-                command.ExecuteNonQuery();
-                MessageBox.Show("Participant added successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Handle team assignment
+                string teamName = string.IsNullOrWhiteSpace(txtTeam.Text) ? "Individual" : txtTeam.Text.Trim();
+                command.Parameters.AddWithValue("@Team", teamName);
+
+                try
+                {
+                    command.ExecuteNonQuery();
+                    MessageBox.Show("Participant added successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error adding participant: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -213,7 +232,7 @@ namespace RaceManager
         private void btnImportParticipants_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            openFileDialog.Filter = "Text files (*.txt)|*.txt|CSV files (*.csv)|*.csv|All files (*.*)|*.*";
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
@@ -222,41 +241,65 @@ namespace RaceManager
             }
         }
 
+
         private void ImportParticipantsFromFile(string filePath)
         {
             string[] lines = File.ReadAllLines(filePath);
+            int successCount = 0;
+            int errorCount = 0;
+
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
                 foreach (string line in lines)
                 {
+                    // Skip empty lines
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
                     var parts = line.Split(',');
 
-                    if (parts.Length < 6)
+                    if (parts.Length < 7)
                     {
-                        MessageBox.Show($"Invalid format in line: {line}", "Import Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        // Optionally log the error instead of showing a message box
+                        // For simplicity, we'll increment the error count
+                        errorCount++;
                         continue;
                     }
 
-                    string rfid = parts[0];
-                    int bib = int.Parse(parts[1]);
-                    string firstName = parts[2];
-                    string lastName = parts[3];
-                    string gender = parts[4];
-                    DateTime birthday = DateTime.Parse(parts[5]);
+                    string rfid = parts[0].Trim();
+                    if (!int.TryParse(parts[1].Trim(), out int bib))
+                    {
+                        errorCount++;
+                        continue;
+                    }
+                    string firstName = parts[2].Trim();
+                    string lastName = parts[3].Trim();
+                    string gender = parts[4].Trim();
+                    if (!DateTime.TryParse(parts[5].Trim(), out DateTime birthday))
+                    {
+                        errorCount++;
+                        continue;
+                    }
+                    string team = parts[6].Trim();
 
                     // Calculate age based on the race date
                     int age = CalculateAge(birthday, raceDate);
 
+                    // Get race and distance information
                     DataRowView selectedRace = (DataRowView)cmbRaces.SelectedItem;
                     DataRowView selectedDistance = (DataRowView)cmbDistances.SelectedItem;
                     string raceName = selectedRace["name"].ToString();
                     string distanceName = selectedDistance["name"].ToString();
                     string categoryName = GetCategory(age, raceName, distanceName);
 
+                    // Default team to "Individual" if empty
+                    team = string.IsNullOrWhiteSpace(team) ? "Individual" : team;
+
+                    // Insert participant
                     MySqlCommand command = new MySqlCommand(
-                        "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id, category) " +
-                        "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId, @Category)", connection);
+                        "INSERT INTO runners (rfid, bib, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_laps, distance_intervals, distance_id, category, team) " +
+                        "VALUES (@Rfid, @Bib, @FirstName, @LastName, @Gender, @Birthday, @Age, @RaceName, @DistanceName, @RaceDate, @DistanceLaps, @DistanceIntervals, @DistanceId, @Category, @Team)", connection);
 
                     command.Parameters.AddWithValue("@Rfid", rfid);
                     command.Parameters.AddWithValue("@Bib", bib);
@@ -266,24 +309,29 @@ namespace RaceManager
                     command.Parameters.AddWithValue("@Birthday", birthday);
                     command.Parameters.AddWithValue("@Age", age);
                     command.Parameters.AddWithValue("@RaceName", raceName);
-                    command.Parameters.AddWithValue("@RaceDate", raceDate);
                     command.Parameters.AddWithValue("@DistanceName", distanceName);
+                    command.Parameters.AddWithValue("@RaceDate", raceDate);
                     command.Parameters.AddWithValue("@DistanceLaps", GetDistanceLaps((int)selectedDistance["id"]));
                     command.Parameters.AddWithValue("@DistanceIntervals", GetDistanceIntervals((int)selectedDistance["id"]));
                     command.Parameters.AddWithValue("@DistanceId", (int)selectedDistance["id"]);
                     command.Parameters.AddWithValue("@Category", categoryName);
+                    command.Parameters.AddWithValue("@Team", team);
 
                     try
                     {
                         command.ExecuteNonQuery();
+                        successCount++;
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        MessageBox.Show($"Error adding participant from line: {line}\nError: {ex.Message}", "Import Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        errorCount++;
+                        // Optionally log the error details
                     }
                 }
-                MessageBox.Show("Import completed.", "Import", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+
+            string message = $"Import completed.\nSuccessfully imported: {successCount}\nFailed to import: {errorCount}";
+            MessageBox.Show(message, "Import Results", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
 
