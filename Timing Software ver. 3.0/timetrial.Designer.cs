@@ -4,6 +4,7 @@
     {
         private System.ComponentModel.IContainer components = null;
 
+        // Existing controls
         private System.Windows.Forms.Label labelConnectionStatus;
         private System.Windows.Forms.Button SelectFileButton;
         private System.Windows.Forms.Button StartMonitoringButton;
@@ -13,15 +14,22 @@
         private System.Windows.Forms.TextBox textBoxLapNumber;
         private System.Windows.Forms.Label labelLapNumber;
 
+        // NEW: Additional controls for remote upload
+        private System.Windows.Forms.Button button3;         // "Upload to Remote" button
+        private System.Windows.Forms.TextBox ReaderPosition; // Reader position TextBox
+        private System.Windows.Forms.Label labelReaderPosition;
+        private System.Windows.Forms.TextBox textBoxEventId; // Event ID TextBox
+        private System.Windows.Forms.Label labelEventId;
+
         /// <summary>
-        /// Clean up any resources being used.
+        /// Dispose of any resources being used.
         /// </summary>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
             {
                 components.Dispose();
-                soundPlayer.Dispose();
+                soundPlayer.Dispose(); // Dispose SoundPlayer too
             }
             base.Dispose(disposing);
         }
@@ -31,6 +39,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+
+            // ========== EXISTING CONTROLS ==========
+
             this.labelConnectionStatus = new System.Windows.Forms.Label();
             this.SelectFileButton = new System.Windows.Forms.Button();
             this.StartMonitoringButton = new System.Windows.Forms.Button();
@@ -39,12 +51,20 @@
             this.labelCurrentLap = new System.Windows.Forms.Label();
             this.textBoxLapNumber = new System.Windows.Forms.TextBox();
             this.labelLapNumber = new System.Windows.Forms.Label();
-            this.SuspendLayout();
+
+            // ========== NEW CONTROLS ==========
+
+            this.button3 = new System.Windows.Forms.Button();
+            this.ReaderPosition = new System.Windows.Forms.TextBox();
+            this.labelReaderPosition = new System.Windows.Forms.Label();
+            this.textBoxEventId = new System.Windows.Forms.TextBox();
+            this.labelEventId = new System.Windows.Forms.Label();
+
             // 
             // labelConnectionStatus
             // 
             this.labelConnectionStatus.AutoSize = true;
-            this.labelConnectionStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelConnectionStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold);
             this.labelConnectionStatus.Location = new System.Drawing.Point(20, 20);
             this.labelConnectionStatus.Name = "labelConnectionStatus";
             this.labelConnectionStatus.Size = new System.Drawing.Size(142, 25);
@@ -94,7 +114,7 @@
             // labelCurrentLap
             // 
             this.labelCurrentLap.AutoSize = true;
-            this.labelCurrentLap.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelCurrentLap.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold);
             this.labelCurrentLap.Location = new System.Drawing.Point(200, 160);
             this.labelCurrentLap.Name = "labelCurrentLap";
             this.labelCurrentLap.Size = new System.Drawing.Size(149, 25);
@@ -118,10 +138,57 @@
             this.labelLapNumber.TabIndex = 7;
             this.labelLapNumber.Text = "Set Lap Number (Manual)";
             // 
-            // timetrial Form
+            // button3 (Upload to Remote)
+            // 
+            this.button3.Location = new System.Drawing.Point(380, 140);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(150, 50);
+            this.button3.TabIndex = 8;
+            this.button3.Text = "Upload to Remote";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // labelReaderPosition
+            // 
+            this.labelReaderPosition.AutoSize = true;
+            this.labelReaderPosition.Location = new System.Drawing.Point(20, 270);
+            this.labelReaderPosition.Name = "labelReaderPosition";
+            this.labelReaderPosition.Size = new System.Drawing.Size(120, 20);
+            this.labelReaderPosition.TabIndex = 9;
+            this.labelReaderPosition.Text = "Reader Position:";
+            // 
+            // ReaderPosition
+            // 
+            this.ReaderPosition.Location = new System.Drawing.Point(150, 267);
+            this.ReaderPosition.Name = "ReaderPosition";
+            this.ReaderPosition.Size = new System.Drawing.Size(150, 26);
+            this.ReaderPosition.TabIndex = 10;
+            // 
+            // labelEventId
+            // 
+            this.labelEventId.AutoSize = true;
+            this.labelEventId.Location = new System.Drawing.Point(20, 320);
+            this.labelEventId.Name = "labelEventId";
+            this.labelEventId.Size = new System.Drawing.Size(63, 20);
+            this.labelEventId.TabIndex = 11;
+            this.labelEventId.Text = "Event ID";
+            // 
+            // textBoxEventId
+            // 
+            this.textBoxEventId.Location = new System.Drawing.Point(150, 317);
+            this.textBoxEventId.Name = "textBoxEventId";
+            this.textBoxEventId.Size = new System.Drawing.Size(150, 26);
+            this.textBoxEventId.TabIndex = 12;
+            // 
+            // timetrial (Form settings)
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.ClientSize = new System.Drawing.Size(560, 270);
+            this.ClientSize = new System.Drawing.Size(560, 370);
+            this.Controls.Add(this.textBoxEventId);
+            this.Controls.Add(this.labelEventId);
+            this.Controls.Add(this.ReaderPosition);
+            this.Controls.Add(this.labelReaderPosition);
+            this.Controls.Add(this.button3);
             this.Controls.Add(this.labelLapNumber);
             this.Controls.Add(this.textBoxLapNumber);
             this.Controls.Add(this.labelCurrentLap);

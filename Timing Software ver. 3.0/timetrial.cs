@@ -255,8 +255,8 @@ namespace Timing_Software_ver._3._0
 
                         // Get distance_intervals value for the runner
                         int distanceIntervals = runnerData["distance_intervals"] != DBNull.Value
-                                                ? Convert.ToInt32(runnerData["distance_intervals"])
-                                                : 0;
+                            ? Convert.ToInt32(runnerData["distance_intervals"])
+                            : 0;
 
                         // Initialize or get RunnerState
                         if (!runnerStates.ContainsKey(rfid))
@@ -369,10 +369,7 @@ namespace Timing_Software_ver._3._0
         private void LogDisqualification(string rfid, int lastLapProcessed, int currentLap)
         {
             string message = $"Runner with RFID {rfid} has been disqualified. Last completed lap: {lastLapProcessed}, current lap: {currentLap}.";
-            // Optionally write to a log file or display a message
-            // For demonstration, we'll write to the console
             Console.WriteLine(message);
-            // You could also display in a UI element like a list box or status label
         }
 
         /// <summary>
@@ -406,7 +403,7 @@ namespace Timing_Software_ver._3._0
             cmd.Parameters.AddWithValue("@timestamp", timestamp);
             cmd.Parameters.AddWithValue("@elapsed_time", elapsedTime);
             cmd.Parameters.AddWithValue("@distance_laps", lapCount);
-            cmd.Parameters.AddWithValue("@split_name", splitName ?? (object)DBNull.Value); // Set to NULL if splitName is null
+            cmd.Parameters.AddWithValue("@split_name", splitName ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@first_name", runnerData["first_name"]);
             cmd.Parameters.AddWithValue("@last_name", runnerData["last_name"]);
             cmd.Parameters.AddWithValue("@gender", runnerData["gender"]);
@@ -426,22 +423,21 @@ namespace Timing_Software_ver._3._0
         /// Increments the global lap number when the button is clicked.
         /// </summary>
         private void IncrementLapButton_Click(object sender, EventArgs e)
-{
-    currentLapNumber += 1;
-    textBoxLapNumber.Text = currentLapNumber.ToString();
-    labelCurrentLap.Text = $"Current Lap: {currentLapNumber}";
-    MessageBox.Show($"Lap number incremented to {currentLapNumber}", "Lap Incremented", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-    // Reset LastProcessedTimestamp for all runners
-    lock (runnerStates)
-    {
-        foreach (var state in runnerStates.Values)
         {
-            state.LastProcessedTimestamp = DateTime.MinValue;
-        }
-    }
-}
+            currentLapNumber += 1;
+            textBoxLapNumber.Text = currentLapNumber.ToString();
+            labelCurrentLap.Text = $"Current Lap: {currentLapNumber}";
+            MessageBox.Show($"Lap number incremented to {currentLapNumber}", "Lap Incremented", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+            // Reset LastProcessedTimestamp for all runners
+            lock (runnerStates)
+            {
+                foreach (var state in runnerStates.Values)
+                {
+                    state.LastProcessedTimestamp = DateTime.MinValue;
+                }
+            }
+        }
 
         /// <summary>
         /// Updates the lap number when the textbox value changes.
@@ -467,6 +463,134 @@ namespace Timing_Software_ver._3._0
         {
             cancellationTokenSource.Cancel();
             MessageBox.Show("Stopped monitoring the file.", "Monitoring Stopped", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// This is the new button click handler that transfers data from the local 'results' table 
+        /// to the remote 'results_zebra' table, using the event ID from textBoxEventId 
+        /// and the ReaderPosition for split_name if needed.
+        /// </summary>
+        private void button3_Click(object sender, EventArgs e)
+        {
+            // Get the remote DB connection string
+            string remoteConnectionString = GetConnectionString("../../../../dbconfig.txt", true); // True for remote DB
+
+            try
+            {
+                using (var localConn = new MySqlConnection(connectionString)) // Use the local connection string
+                {
+                    localConn.Open();
+
+                    // Update `split_name` in local `results` table based on `ReaderPosition` textbox value
+                    string readerPosition = ReaderPosition.Text;
+                    if (!string.IsNullOrEmpty(readerPosition))
+                    {
+                        using (var updateCmd = new MySqlCommand(
+                            "UPDATE results SET split_name = @split_name WHERE split_name IS NULL OR split_name = ''",
+                            localConn))
+                        {
+                            updateCmd.Parameters.AddWithValue("@split_name", readerPosition);
+                            updateCmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    using (var cmd = new MySqlCommand("SELECT * FROM results", localConn))
+                    {
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            using (var remoteConn = new MySqlConnection(remoteConnectionString))
+                            {
+                                remoteConn.Open();
+
+                                while (reader.Read())
+                                {
+                                    // Check if the record already exists in remote DB
+                                    using (var checkCmd = new MySqlCommand(
+                                        @"SELECT COUNT(*) FROM results_zebra 
+                                          WHERE rfid = @rfid 
+                                            AND timestamp = @timestamp 
+                                            AND event_id = @event_id",
+                                        remoteConn))
+                                    {
+                                        checkCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
+                                        checkCmd.Parameters.AddWithValue("@timestamp", reader["timestamp"]);
+                                        checkCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text));
+
+                                        int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                                        if (count == 0) // Record not found, insert it
+                                        {
+                                            using (var insertCmd = new MySqlCommand(
+                                                @"INSERT INTO results_zebra 
+                                                (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, 
+                                                 race_name, distance_name, race_date, distance_laps, distance_intervals, 
+                                                 category, elapsed_time, position, category_position, gender_position, 
+                                                 event_id, bib, split_name, team) 
+                                                VALUES 
+                                                (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age,
+                                                 @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals,
+                                                 @category, @elapsed_time, @position, @category_position, @gender_position,
+                                                 @event_id, @bib, @split_name, @team)",
+                                                remoteConn))
+                                            {
+                                                // Add parameters for insertion
+                                                insertCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
+                                                insertCmd.Parameters.AddWithValue("@timestamp", reader["timestamp"]);
+                                                insertCmd.Parameters.AddWithValue("@gap", reader["gap"]);
+                                                insertCmd.Parameters.AddWithValue("@first_name", reader["first_name"]);
+                                                insertCmd.Parameters.AddWithValue("@last_name", reader["last_name"]);
+                                                insertCmd.Parameters.AddWithValue("@gender", reader["gender"]);
+                                                insertCmd.Parameters.AddWithValue("@birthday", reader["birthday"]);
+                                                insertCmd.Parameters.AddWithValue("@age", reader["age"]);
+                                                insertCmd.Parameters.AddWithValue("@race_name", reader["race_name"]);
+                                                insertCmd.Parameters.AddWithValue("@distance_name", reader["distance_name"]);
+                                                insertCmd.Parameters.AddWithValue("@race_date", reader["race_date"]);
+                                                insertCmd.Parameters.AddWithValue("@distance_laps", reader["distance_laps"]);
+                                                insertCmd.Parameters.AddWithValue("@distance_intervals", reader["distance_intervals"]);
+                                                insertCmd.Parameters.AddWithValue("@category", reader["category"]);
+                                                insertCmd.Parameters.AddWithValue("@elapsed_time", reader["elapsed_time"]);
+
+                                                // position can be NULL
+                                                insertCmd.Parameters.AddWithValue("@position",
+                                                    reader["position"] != DBNull.Value
+                                                        ? reader["position"]
+                                                        : (object)DBNull.Value);
+
+                                                // category_position and gender_position can be NULL
+                                                var categoryPosition = reader["category_position"] != DBNull.Value
+                                                    ? reader["category_position"]
+                                                    : (object)DBNull.Value;
+                                                var genderPosition = reader["gender_position"] != DBNull.Value
+                                                    ? reader["gender_position"]
+                                                    : (object)DBNull.Value;
+
+                                                insertCmd.Parameters.AddWithValue("@category_position", categoryPosition);
+                                                insertCmd.Parameters.AddWithValue("@gender_position", genderPosition);
+
+                                                insertCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text));
+                                                insertCmd.Parameters.AddWithValue("@bib", reader["bib"]);
+                                                insertCmd.Parameters.AddWithValue("@split_name", reader["split_name"]);
+
+                                                // Add the 'team' parameter
+                                                insertCmd.Parameters.AddWithValue("@team", reader["team"]);
+
+                                                // Perform the INSERT
+                                                insertCmd.ExecuteNonQuery();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                MessageBox.Show("Data transferred successfully to the remote results_zebra table.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error transferring data: " + ex.Message);
+            }
         }
     }
 }
