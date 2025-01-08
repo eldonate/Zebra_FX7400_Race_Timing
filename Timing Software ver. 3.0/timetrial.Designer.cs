@@ -14,12 +14,17 @@
         private System.Windows.Forms.TextBox textBoxLapNumber;
         private System.Windows.Forms.Label labelLapNumber;
 
-        // NEW: Additional controls for remote upload
+        // Additional controls for remote upload
         private System.Windows.Forms.Button button3;         // "Upload to Remote" button
         private System.Windows.Forms.TextBox ReaderPosition; // Reader position TextBox
         private System.Windows.Forms.Label labelReaderPosition;
         private System.Windows.Forms.TextBox textBoxEventId; // Event ID TextBox
         private System.Windows.Forms.Label labelEventId;
+
+        // NEW: Controls for manual bib-based lap submission
+        private System.Windows.Forms.Label labelBibNumber;
+        private System.Windows.Forms.TextBox textBoxBibNumber;
+        private System.Windows.Forms.Button buttonSubmitLap;
 
         /// <summary>
         /// Dispose of any resources being used.
@@ -29,7 +34,7 @@
             if (disposing && (components != null))
             {
                 components.Dispose();
-                soundPlayer.Dispose(); // Dispose SoundPlayer too
+                soundPlayer.Dispose(); // Dispose SoundPlayer too, if declared here
             }
             base.Dispose(disposing);
         }
@@ -52,13 +57,19 @@
             this.textBoxLapNumber = new System.Windows.Forms.TextBox();
             this.labelLapNumber = new System.Windows.Forms.Label();
 
-            // ========== NEW CONTROLS ==========
+            // ========== CONTROLS FOR REMOTE UPLOAD ==========
 
             this.button3 = new System.Windows.Forms.Button();
             this.ReaderPosition = new System.Windows.Forms.TextBox();
             this.labelReaderPosition = new System.Windows.Forms.Label();
             this.textBoxEventId = new System.Windows.Forms.TextBox();
             this.labelEventId = new System.Windows.Forms.Label();
+
+            // ========== NEW CONTROLS FOR MANUAL BIB SUBMISSION ==========
+
+            this.labelBibNumber = new System.Windows.Forms.Label();
+            this.textBoxBibNumber = new System.Windows.Forms.TextBox();
+            this.buttonSubmitLap = new System.Windows.Forms.Button();
 
             // 
             // labelConnectionStatus
@@ -180,10 +191,39 @@
             this.textBoxEventId.Size = new System.Drawing.Size(150, 26);
             this.textBoxEventId.TabIndex = 12;
             // 
+            // labelBibNumber
+            // 
+            this.labelBibNumber.AutoSize = true;
+            this.labelBibNumber.Location = new System.Drawing.Point(20, 370);
+            this.labelBibNumber.Name = "labelBibNumber";
+            this.labelBibNumber.Size = new System.Drawing.Size(87, 20);
+            this.labelBibNumber.TabIndex = 13;
+            this.labelBibNumber.Text = "Bib Number";
+            // 
+            // textBoxBibNumber
+            // 
+            this.textBoxBibNumber.Location = new System.Drawing.Point(150, 367);
+            this.textBoxBibNumber.Name = "textBoxBibNumber";
+            this.textBoxBibNumber.Size = new System.Drawing.Size(150, 26);
+            this.textBoxBibNumber.TabIndex = 14;
+            // 
+            // buttonSubmitLap
+            // 
+            this.buttonSubmitLap.Location = new System.Drawing.Point(320, 360);
+            this.buttonSubmitLap.Name = "buttonSubmitLap";
+            this.buttonSubmitLap.Size = new System.Drawing.Size(150, 40);
+            this.buttonSubmitLap.TabIndex = 15;
+            this.buttonSubmitLap.Text = "Submit Lap";
+            this.buttonSubmitLap.UseVisualStyleBackColor = true;
+            this.buttonSubmitLap.Click += new System.EventHandler(this.buttonSubmitLap_Click);
+            // 
             // timetrial (Form settings)
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.ClientSize = new System.Drawing.Size(560, 370);
+            this.ClientSize = new System.Drawing.Size(560, 430);
+            this.Controls.Add(this.buttonSubmitLap);
+            this.Controls.Add(this.textBoxBibNumber);
+            this.Controls.Add(this.labelBibNumber);
             this.Controls.Add(this.textBoxEventId);
             this.Controls.Add(this.labelEventId);
             this.Controls.Add(this.ReaderPosition);

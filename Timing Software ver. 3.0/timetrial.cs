@@ -17,8 +17,8 @@ namespace Timing_Software_ver._3._0
         public int LastLapProcessed { get; set; }
         public bool IsExpectingFirstRead { get; set; }
         public DateTime FirstReadTimestamp { get; set; }
-        public DateTime LastProcessedTimestamp { get; set; } // For distance_intervals check
-        public bool IsDisqualified { get; set; } // Indicates if the runner is disqualified
+        public DateTime LastProcessedTimestamp { get; set; }
+        public bool IsDisqualified { get; set; }
 
         public RunnerState()
         {
@@ -47,20 +47,30 @@ namespace Timing_Software_ver._3._0
         public timetrial()
         {
             InitializeComponent();
+
+            // Read local DB config
             connectionString = GetConnectionString("dbconfig.txt", false);
+
             cancellationTokenSource = new CancellationTokenSource();
             lastPosition = 0;
+
+            // Load the beep sound (place beep.wav in your executable folder or adjust path)
             soundPlayer = new SoundPlayer("beep.wav");
+
+            // Initialize the dictionary that holds runner states
             runnerStates = new Dictionary<string, RunnerState>();
-            currentLapNumber = 1; // Initialize lap number to 1
+
+            // Start with lap 1
+            currentLapNumber = 1;
             textBoxLapNumber.Text = currentLapNumber.ToString();
 
-            // Connect to database and update status label
+            // Connect to local database and update status label
             ConnectToDatabase();
         }
 
         /// <summary>
         /// Reads the connection string from the configuration file.
+        /// If isRemote is true, read remote credentials, else read local credentials.
         /// </summary>
         private string GetConnectionString(string configFile, bool isRemote)
         {
@@ -124,7 +134,7 @@ namespace Timing_Software_ver._3._0
         }
 
         /// <summary>
-        /// Attempts to connect to the database and updates the connection status label.
+        /// Attempts to connect to the database and updates the labelConnectionStatus.
         /// </summary>
         private void ConnectToDatabase()
         {
@@ -158,7 +168,7 @@ namespace Timing_Software_ver._3._0
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     selectedFilePath = openFileDialog.FileName;
-                    lastPosition = 0; // Reset position when a new file is selected
+                    lastPosition = 0; // Reset position for new file
                     MessageBox.Show($"File selected: {selectedFilePath}", "File Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
@@ -205,12 +215,13 @@ namespace Timing_Software_ver._3._0
                         string line = await reader.ReadLineAsync();
                         if (line != null)
                         {
+                            // Example line format: some_id, 2023-09-01 10:00:00, RFID1234
                             var columns = line.Split(',');
                             if (columns.Length < 3)
-                                continue; // Ensure there are enough columns
+                                continue; // Not enough columns
 
                             if (!DateTime.TryParse(columns[1], out DateTime timestamp))
-                                continue; // Invalid timestamp format
+                                continue; // Invalid timestamp
 
                             string rfid = columns[2].Trim();
                             if (string.IsNullOrEmpty(rfid))
@@ -220,7 +231,7 @@ namespace Timing_Software_ver._3._0
                         }
                         else
                         {
-                            // No more lines to read, wait for new data
+                            // No new lines, wait a bit before checking again
                             await Task.Delay(500, cancellationToken);
                         }
                     }
@@ -237,11 +248,11 @@ namespace Timing_Software_ver._3._0
         }
 
         /// <summary>
-        /// Processes an RFID entry according to the specified logic.
+        /// Processes an RFID entry according to the specified logic (laps, intervals, disqualification).
         /// </summary>
         private void ProcessRfidEntry(string rfid, DateTime timestamp)
         {
-            lock (runnerStates) // Ensure thread safety
+            lock (runnerStates) // Thread safety
             {
                 using (var connection = new MySqlConnection(connectionString))
                 {
@@ -251,14 +262,14 @@ namespace Timing_Software_ver._3._0
 
                         // Get runner data by RFID
                         var runnerData = GetRunnerData(connection, rfid);
-                        if (runnerData == null) return;
+                        if (runnerData == null) return; // Runner not found, ignore
 
-                        // Get distance_intervals value for the runner
+                        // distance_intervals from 'runners' table
                         int distanceIntervals = runnerData["distance_intervals"] != DBNull.Value
                             ? Convert.ToInt32(runnerData["distance_intervals"])
                             : 0;
 
-                        // Initialize or get RunnerState
+                        // Ensure we have a RunnerState for this RFID
                         if (!runnerStates.ContainsKey(rfid))
                         {
                             runnerStates[rfid] = new RunnerState();
@@ -266,24 +277,19 @@ namespace Timing_Software_ver._3._0
 
                         RunnerState state = runnerStates[rfid];
 
-                        // Check if the runner is disqualified
+                        // If runner is disqualified, ignore further reads from this method
                         if (state.IsDisqualified)
-                        {
-                            // Runner has missed a lap previously, ignore
                             return;
-                        }
 
-                        // Check if the runner has missed a lap
+                        // Check if the runner missed a lap => disqualification
                         if (state.LastLapProcessed < currentLapNumber - 1)
                         {
-                            // Runner has missed a lap, disqualify them
                             state.IsDisqualified = true;
-                            // Optionally, log or notify about the disqualification
                             LogDisqualification(rfid, state.LastLapProcessed, currentLapNumber);
                             return;
                         }
 
-                        // Check if we can process this RFID for the current lap
+                        // Process if the runner is on the "currentLapNumber - 1" lap
                         if (state.LastLapProcessed == currentLapNumber - 1)
                         {
                             // Distance interval check
@@ -299,12 +305,12 @@ namespace Timing_Software_ver._3._0
 
                             if (state.IsExpectingFirstRead)
                             {
-                                // First read for the lap
+                                // First read for the lap (lap start)
                                 string elapsedTime = "00:00:00:00";
                                 int lapCount = currentLapNumber;
                                 string splitName = null;
 
-                                // Insert record
+                                // Insert record (lap start)
                                 InsertIntoResults(connection, runnerData, timestamp, elapsedTime, lapCount, splitName);
 
                                 // Update state
@@ -317,26 +323,24 @@ namespace Timing_Software_ver._3._0
                             }
                             else
                             {
-                                // Second read for the lap
+                                // Second read for the lap (lap completion)
                                 TimeSpan elapsed = timestamp - state.FirstReadTimestamp;
 
                                 if (elapsed.TotalSeconds <= distanceIntervals)
-                                {
-                                    // Skip this entry due to distance_intervals constraint
-                                    return;
-                                }
+                                    return; // Too soon according to distance_intervals
 
+                                // Format: dd:HH:mm:ss
                                 string elapsedTime = $"{(int)elapsed.TotalDays:D2}:{elapsed.Hours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
                                 int lapCount = currentLapNumber;
                                 string splitName = $"Lap {currentLapNumber}";
 
-                                // Use custom split name if provided
+                                // Optionally override the lap label if the user typed something in textBoxLapNumber
                                 if (!string.IsNullOrWhiteSpace(textBoxLapNumber.Text))
                                 {
                                     splitName = $"Lap {textBoxLapNumber.Text.Trim()}";
                                 }
 
-                                // Insert record
+                                // Insert record (lap completion)
                                 InsertIntoResults(connection, runnerData, timestamp, elapsedTime, lapCount, splitName);
 
                                 // Update state
@@ -351,7 +355,8 @@ namespace Timing_Software_ver._3._0
                         }
                         else
                         {
-                            // Runner has already processed this lap or missed a lap (handled above)
+                            // Runner has already completed this lap or is behind
+                            // If behind => disqualified above. If ahead => do nothing.
                             return;
                         }
                     }
@@ -368,12 +373,13 @@ namespace Timing_Software_ver._3._0
         /// </summary>
         private void LogDisqualification(string rfid, int lastLapProcessed, int currentLap)
         {
-            string message = $"Runner with RFID {rfid} has been disqualified. Last completed lap: {lastLapProcessed}, current lap: {currentLap}.";
+            string message = $"Runner with RFID {rfid} has been disqualified. " +
+                             $"Last completed lap: {lastLapProcessed}, current lap: {currentLap}.";
             Console.WriteLine(message);
         }
 
         /// <summary>
-        /// Retrieves runner data from the database based on RFID.
+        /// Retrieves runner data from the 'runners' table using RFID.
         /// </summary>
         private DataRow GetRunnerData(MySqlConnection connection, string rfid)
         {
@@ -389,34 +395,48 @@ namespace Timing_Software_ver._3._0
         }
 
         /// <summary>
-        /// Inserts a new record into the results table with the provided data.
+        /// Inserts a new record into the 'results' table with relevant data.
         /// </summary>
         private void InsertIntoResults(MySqlConnection connection, DataRow runnerData, DateTime timestamp, string elapsedTime, int lapCount, string splitName)
         {
             var query = @"INSERT INTO results 
-                          (rfid, timestamp, elapsed_time, distance_laps, split_name, first_name, last_name, gender, birthday, age, race_name, distance_name, race_date, distance_intervals, category, bib) 
-                          VALUES 
-                          (@rfid, @timestamp, @elapsed_time, @distance_laps, @split_name, @first_name, @last_name, @gender, @birthday, @age, @race_name, @distance_name, @race_date, @distance_intervals, @category, @bib)";
-            var cmd = new MySqlCommand(query, connection);
+                  (rfid, timestamp, elapsed_time, distance_laps, split_name, 
+                   first_name, last_name, gender, birthday, age, 
+                   race_name, distance_name, race_date, distance_intervals, 
+                   category, bib, team) 
+                  VALUES 
+                  (@rfid, @timestamp, @elapsed_time, @distance_laps, @split_name, 
+                   @first_name, @last_name, @gender, @birthday, @age, 
+                   @race_name, @distance_name, @race_date, @distance_intervals, 
+                   @category, @bib, @team)";
 
-            cmd.Parameters.AddWithValue("@rfid", runnerData["rfid"]);
-            cmd.Parameters.AddWithValue("@timestamp", timestamp);
-            cmd.Parameters.AddWithValue("@elapsed_time", elapsedTime);
-            cmd.Parameters.AddWithValue("@distance_laps", lapCount);
-            cmd.Parameters.AddWithValue("@split_name", splitName ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@first_name", runnerData["first_name"]);
-            cmd.Parameters.AddWithValue("@last_name", runnerData["last_name"]);
-            cmd.Parameters.AddWithValue("@gender", runnerData["gender"]);
-            cmd.Parameters.AddWithValue("@birthday", runnerData["birthday"]);
-            cmd.Parameters.AddWithValue("@age", runnerData["age"]);
-            cmd.Parameters.AddWithValue("@race_name", runnerData["race_name"]);
-            cmd.Parameters.AddWithValue("@distance_name", runnerData["distance_name"]);
-            cmd.Parameters.AddWithValue("@race_date", runnerData["race_date"]);
-            cmd.Parameters.AddWithValue("@distance_intervals", runnerData["distance_intervals"]);
-            cmd.Parameters.AddWithValue("@category", runnerData["category"]);
-            cmd.Parameters.AddWithValue("@bib", runnerData["bib"]);
+            using (var cmd = new MySqlCommand(query, connection))
+            {
+                cmd.Parameters.AddWithValue("@rfid", runnerData["rfid"]);
+                cmd.Parameters.AddWithValue("@timestamp", timestamp);
+                cmd.Parameters.AddWithValue("@elapsed_time", elapsedTime);
+                cmd.Parameters.AddWithValue("@distance_laps", lapCount);
+                cmd.Parameters.AddWithValue("@split_name", splitName ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@first_name", runnerData["first_name"]);
+                cmd.Parameters.AddWithValue("@last_name", runnerData["last_name"]);
+                cmd.Parameters.AddWithValue("@gender", runnerData["gender"]);
+                cmd.Parameters.AddWithValue("@birthday", runnerData["birthday"]);
+                cmd.Parameters.AddWithValue("@age", runnerData["age"]);
+                cmd.Parameters.AddWithValue("@race_name", runnerData["race_name"]);
+                cmd.Parameters.AddWithValue("@distance_name", runnerData["distance_name"]);
+                cmd.Parameters.AddWithValue("@race_date", runnerData["race_date"]);
+                cmd.Parameters.AddWithValue("@distance_intervals", runnerData["distance_intervals"]);
+                cmd.Parameters.AddWithValue("@category", runnerData["category"]);
+                cmd.Parameters.AddWithValue("@bib", runnerData["bib"]);
 
-            cmd.ExecuteNonQuery();
+                // NEW: team column
+                cmd.Parameters.AddWithValue("@team",
+                    runnerData.Table.Columns.Contains("team") && runnerData["team"] != DBNull.Value
+                        ? runnerData["team"]
+                        : (object)DBNull.Value);
+
+                cmd.ExecuteNonQuery();
+            }
         }
 
         /// <summary>
@@ -466,22 +486,21 @@ namespace Timing_Software_ver._3._0
         }
 
         /// <summary>
-        /// This is the new button click handler that transfers data from the local 'results' table 
-        /// to the remote 'results_zebra' table, using the event ID from textBoxEventId 
-        /// and the ReaderPosition for split_name if needed.
+        /// Transfers data from the local 'results' table to the remote 'results_zebra' table.
+        /// Uses 'textBoxEventId' for event_id and 'ReaderPosition' for split_name if provided.
         /// </summary>
         private void button3_Click(object sender, EventArgs e)
         {
             // Get the remote DB connection string
-            string remoteConnectionString = GetConnectionString("../../../../dbconfig.txt", true); // True for remote DB
+            string remoteConnectionString = GetConnectionString("../../../../dbconfig.txt", true); // 'true' for remote DB
 
             try
             {
-                using (var localConn = new MySqlConnection(connectionString)) // Use the local connection string
+                using (var localConn = new MySqlConnection(connectionString)) // local connection
                 {
                     localConn.Open();
 
-                    // Update `split_name` in local `results` table based on `ReaderPosition` textbox value
+                    // Update 'split_name' in local 'results' based on 'ReaderPosition' textbox
                     string readerPosition = ReaderPosition.Text;
                     if (!string.IsNullOrEmpty(readerPosition))
                     {
@@ -494,6 +513,7 @@ namespace Timing_Software_ver._3._0
                         }
                     }
 
+                    // Transfer data from local results -> remote results_zebra
                     using (var cmd = new MySqlCommand("SELECT * FROM results", localConn))
                     {
                         using (var reader = cmd.ExecuteReader())
@@ -504,9 +524,8 @@ namespace Timing_Software_ver._3._0
 
                                 while (reader.Read())
                                 {
-                                    // Check if the record already exists in remote DB
                                     using (var checkCmd = new MySqlCommand(
-                                        @"SELECT COUNT(*) FROM results_zebra 
+                                        @"SELECT COUNT(*) FROM results_zebra
                                           WHERE rfid = @rfid 
                                             AND timestamp = @timestamp 
                                             AND event_id = @event_id",
@@ -518,25 +537,29 @@ namespace Timing_Software_ver._3._0
 
                                         int count = Convert.ToInt32(checkCmd.ExecuteScalar());
 
-                                        if (count == 0) // Record not found, insert it
+                                        if (count == 0) // record not found, insert
                                         {
                                             using (var insertCmd = new MySqlCommand(
                                                 @"INSERT INTO results_zebra 
-                                                (rfid, timestamp, gap, first_name, last_name, gender, birthday, age, 
-                                                 race_name, distance_name, race_date, distance_laps, distance_intervals, 
-                                                 category, elapsed_time, position, category_position, gender_position, 
+                                                (rfid, timestamp, gap, 
+                                                 first_name, last_name, gender, birthday, age,
+                                                 race_name, distance_name, race_date, distance_laps, distance_intervals,
+                                                 category, elapsed_time, position, category_position, gender_position,
                                                  event_id, bib, split_name, team) 
                                                 VALUES 
-                                                (@rfid, @timestamp, @gap, @first_name, @last_name, @gender, @birthday, @age,
+                                                (@rfid, @timestamp, @gap, 
+                                                 @first_name, @last_name, @gender, @birthday, @age,
                                                  @race_name, @distance_name, @race_date, @distance_laps, @distance_intervals,
                                                  @category, @elapsed_time, @position, @category_position, @gender_position,
                                                  @event_id, @bib, @split_name, @team)",
                                                 remoteConn))
                                             {
-                                                // Add parameters for insertion
+                                                // Prepare parameters
                                                 insertCmd.Parameters.AddWithValue("@rfid", reader["rfid"]);
                                                 insertCmd.Parameters.AddWithValue("@timestamp", reader["timestamp"]);
-                                                insertCmd.Parameters.AddWithValue("@gap", reader["gap"]);
+                                                insertCmd.Parameters.AddWithValue("@gap", reader["gap"] != DBNull.Value
+                                                                                    ? reader["gap"]
+                                                                                    : (object)DBNull.Value);
                                                 insertCmd.Parameters.AddWithValue("@first_name", reader["first_name"]);
                                                 insertCmd.Parameters.AddWithValue("@last_name", reader["last_name"]);
                                                 insertCmd.Parameters.AddWithValue("@gender", reader["gender"]);
@@ -549,32 +572,27 @@ namespace Timing_Software_ver._3._0
                                                 insertCmd.Parameters.AddWithValue("@distance_intervals", reader["distance_intervals"]);
                                                 insertCmd.Parameters.AddWithValue("@category", reader["category"]);
                                                 insertCmd.Parameters.AddWithValue("@elapsed_time", reader["elapsed_time"]);
-
-                                                // position can be NULL
                                                 insertCmd.Parameters.AddWithValue("@position",
                                                     reader["position"] != DBNull.Value
                                                         ? reader["position"]
                                                         : (object)DBNull.Value);
-
-                                                // category_position and gender_position can be NULL
-                                                var categoryPosition = reader["category_position"] != DBNull.Value
-                                                    ? reader["category_position"]
-                                                    : (object)DBNull.Value;
-                                                var genderPosition = reader["gender_position"] != DBNull.Value
-                                                    ? reader["gender_position"]
-                                                    : (object)DBNull.Value;
-
-                                                insertCmd.Parameters.AddWithValue("@category_position", categoryPosition);
-                                                insertCmd.Parameters.AddWithValue("@gender_position", genderPosition);
+                                                insertCmd.Parameters.AddWithValue("@category_position",
+                                                    reader["category_position"] != DBNull.Value
+                                                        ? reader["category_position"]
+                                                        : (object)DBNull.Value);
+                                                insertCmd.Parameters.AddWithValue("@gender_position",
+                                                    reader["gender_position"] != DBNull.Value
+                                                        ? reader["gender_position"]
+                                                        : (object)DBNull.Value);
 
                                                 insertCmd.Parameters.AddWithValue("@event_id", Convert.ToInt32(textBoxEventId.Text));
                                                 insertCmd.Parameters.AddWithValue("@bib", reader["bib"]);
                                                 insertCmd.Parameters.AddWithValue("@split_name", reader["split_name"]);
+                                                insertCmd.Parameters.AddWithValue("@team",
+                                                    reader["team"] != DBNull.Value
+                                                        ? reader["team"]
+                                                        : (object)DBNull.Value);
 
-                                                // Add the 'team' parameter
-                                                insertCmd.Parameters.AddWithValue("@team", reader["team"]);
-
-                                                // Perform the INSERT
                                                 insertCmd.ExecuteNonQuery();
                                             }
                                         }
@@ -590,6 +608,151 @@ namespace Timing_Software_ver._3._0
             catch (Exception ex)
             {
                 MessageBox.Show("Error transferring data: " + ex.Message);
+            }
+        }
+
+        // =================================================================
+        //  NEW FEATURE: MANUAL BIB-BASED LAP SUBMISSION (OVERRIDES DQ)
+        // =================================================================
+
+        /// <summary>
+        /// When the user clicks the "Submit Lap" button, we find the runner by bib number
+        /// and manually insert either a start or finish entry for the current lap,
+        /// regardless of disqualification or missed laps.
+        /// </summary>
+        private void buttonSubmitLap_Click(object sender, EventArgs e)
+        {
+            string bibNumber = textBoxBibNumber.Text.Trim();
+
+            if (string.IsNullOrEmpty(bibNumber))
+            {
+                MessageBox.Show("Please enter a bib number.", "Input Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // 1. Look up runner by bib number
+                    var runnerData = GetRunnerDataByBib(connection, bibNumber);
+                    if (runnerData == null)
+                    {
+                        MessageBox.Show($"No runner found with bib number: {bibNumber}",
+                                        "Runner Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    // 2. Extract RFID from runner data
+                    string rfid = runnerData["rfid"].ToString();
+
+                    // 3. Manually submit a lap (start or finish) unconditionally
+                    ManualLapSubmission(rfid, runnerData, connection);
+
+                    MessageBox.Show($"Manual lap submission for bib {bibNumber} completed.",
+                                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    textBoxBibNumber.Text = string.Empty; // Clear input
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves runner data from the database using the bib number.
+        /// </summary>
+        private DataRow GetRunnerDataByBib(MySqlConnection connection, string bibNumber)
+        {
+            var query = "SELECT * FROM runners WHERE bib = @bibNumber";
+            var cmd = new MySqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@bibNumber", bibNumber);
+
+            var adapter = new MySqlDataAdapter(cmd);
+            var runnerTable = new DataTable();
+            adapter.Fill(runnerTable);
+
+            return runnerTable.Rows.Count > 0 ? runnerTable.Rows[0] : null;
+        }
+
+        /// <summary>
+        /// Manually simulates either a lap start or lap finish for the current lap,
+        /// overriding disqualification and missed-lap checks.
+        /// </summary>
+        private void ManualLapSubmission(string rfid, DataRow runnerData, MySqlConnection connection)
+        {
+            lock (runnerStates)
+            {
+                // Ensure there's a RunnerState entry
+                if (!runnerStates.ContainsKey(rfid))
+                {
+                    runnerStates[rfid] = new RunnerState();
+                }
+
+                RunnerState state = runnerStates[rfid];
+
+                // 1. Override disqualification
+                if (state.IsDisqualified)
+                {
+                    // Re-instate the runner
+                    state.IsDisqualified = false;
+                    Console.WriteLine($"Runner {rfid} was disqualified but has been reinstated via manual submission.");
+                }
+
+                // 2. We do NOT check if they've missed a lap or not.
+                //    We simply proceed with either a start or finish.
+
+                DateTime currentTimestamp = DateTime.Now;
+
+                if (state.IsExpectingFirstRead)
+                {
+                    // This simulates the start of the lap
+                    string elapsedTime = "00:00:00:00";
+                    int lapCount = currentLapNumber;
+                    string splitName = null; // No specific split name for start
+
+                    InsertIntoResults(connection, runnerData, currentTimestamp, elapsedTime, lapCount, splitName);
+
+                    // Update RunnerState for the next (finish) read
+                    state.IsExpectingFirstRead = false;
+                    state.FirstReadTimestamp = currentTimestamp;
+                    state.LastProcessedTimestamp = currentTimestamp;
+
+                    // Play beep
+                    soundPlayer.Play();
+                }
+                else
+                {
+                    // This simulates the finish of the lap
+                    TimeSpan elapsed = currentTimestamp - state.FirstReadTimestamp;
+
+                    // Format elapsed time as dd:HH:mm:ss
+                    string elapsedTime = $"{(int)elapsed.TotalDays:D2}:{elapsed.Hours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
+                    int lapCount = currentLapNumber;
+                    string splitName = $"Lap {currentLapNumber}";
+
+                    // If user typed a custom lap name in textBoxLapNumber, override
+                    if (!string.IsNullOrWhiteSpace(textBoxLapNumber.Text))
+                    {
+                        splitName = $"Lap {textBoxLapNumber.Text.Trim()}";
+                    }
+
+                    InsertIntoResults(connection, runnerData, currentTimestamp, elapsedTime, lapCount, splitName);
+
+                    // Mark this lap as finished
+                    state.LastLapProcessed = currentLapNumber;
+                    state.IsExpectingFirstRead = true;
+                    state.FirstReadTimestamp = DateTime.MinValue;
+                    state.LastProcessedTimestamp = currentTimestamp;
+
+                    // Play beep
+                    soundPlayer.Play();
+                }
             }
         }
     }
