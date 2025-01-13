@@ -44,6 +44,10 @@ namespace Timing_Software_ver._3._0
         // Global lap number
         private int currentLapNumber;
 
+        // NEW: Counters for how many started/finished
+        private int runnersStartedCurrentLap;
+        private int runnersFinishedCurrentLap;
+
         public timetrial()
         {
             InitializeComponent();
@@ -63,6 +67,12 @@ namespace Timing_Software_ver._3._0
             // Start with lap 1
             currentLapNumber = 1;
             textBoxLapNumber.Text = currentLapNumber.ToString();
+
+            // Initialize counters
+            runnersStartedCurrentLap = 0;
+            runnersFinishedCurrentLap = 0;
+            textBoxStartedCount.Text = runnersStartedCurrentLap.ToString();
+            textBoxFinishedCount.Text = runnersFinishedCurrentLap.ToString();
 
             // Connect to local database and update status label
             ConnectToDatabase();
@@ -248,7 +258,8 @@ namespace Timing_Software_ver._3._0
         }
 
         /// <summary>
-        /// Processes an RFID entry according to the specified logic (laps, intervals, disqualification).
+        /// Processes an RFID entry according to the specified logic (laps, intervals, disqualification),
+        /// and updates the Started/Finished counters as needed.
         /// </summary>
         private void ProcessRfidEntry(string rfid, DateTime timestamp)
         {
@@ -277,7 +288,7 @@ namespace Timing_Software_ver._3._0
 
                         RunnerState state = runnerStates[rfid];
 
-                        // If runner is disqualified, ignore further reads from this method
+                        // If runner is disqualified, ignore further reads
                         if (state.IsDisqualified)
                             return;
 
@@ -318,6 +329,13 @@ namespace Timing_Software_ver._3._0
                                 state.FirstReadTimestamp = timestamp;
                                 state.LastProcessedTimestamp = timestamp;
 
+                                // **Increment "started" count** and update textbox
+                                runnersStartedCurrentLap++;
+                                textBoxStartedCount.Invoke((Action)(() =>
+                                {
+                                    textBoxStartedCount.Text = runnersStartedCurrentLap.ToString();
+                                }));
+
                                 // Play beep
                                 soundPlayer.Play();
                             }
@@ -348,6 +366,13 @@ namespace Timing_Software_ver._3._0
                                 state.FirstReadTimestamp = DateTime.MinValue;
                                 state.LastLapProcessed = currentLapNumber;
                                 state.LastProcessedTimestamp = timestamp;
+
+                                // **Increment "finished" count** and update textbox
+                                runnersFinishedCurrentLap++;
+                                textBoxFinishedCount.Invoke((Action)(() =>
+                                {
+                                    textBoxFinishedCount.Text = runnersFinishedCurrentLap.ToString();
+                                }));
 
                                 // Play beep
                                 soundPlayer.Play();
@@ -440,7 +465,8 @@ namespace Timing_Software_ver._3._0
         }
 
         /// <summary>
-        /// Increments the global lap number when the button is clicked.
+        /// Increments the global lap number when the button is clicked,
+        /// and resets the started/finished counters for the new lap.
         /// </summary>
         private void IncrementLapButton_Click(object sender, EventArgs e)
         {
@@ -448,6 +474,12 @@ namespace Timing_Software_ver._3._0
             textBoxLapNumber.Text = currentLapNumber.ToString();
             labelCurrentLap.Text = $"Current Lap: {currentLapNumber}";
             MessageBox.Show($"Lap number incremented to {currentLapNumber}", "Lap Incremented", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // Reset counters
+            runnersStartedCurrentLap = 0;
+            runnersFinishedCurrentLap = 0;
+            textBoxStartedCount.Text = "0";
+            textBoxFinishedCount.Text = "0";
 
             // Reset LastProcessedTimestamp for all runners
             lock (runnerStates)
@@ -460,7 +492,8 @@ namespace Timing_Software_ver._3._0
         }
 
         /// <summary>
-        /// Updates the lap number when the textbox value changes.
+        /// Updates the lap number when the textbox value changes,
+        /// and also resets the started/finished counters.
         /// </summary>
         private void TextBoxLapNumber_TextChanged(object sender, EventArgs e)
         {
@@ -468,6 +501,13 @@ namespace Timing_Software_ver._3._0
             {
                 currentLapNumber = lapNumber;
                 labelCurrentLap.Text = $"Current Lap: {currentLapNumber}";
+
+                // When manually overriding the lap number,
+                // reset the started/finished counters for the new lap
+                runnersStartedCurrentLap = 0;
+                runnersFinishedCurrentLap = 0;
+                textBoxStartedCount.Text = "0";
+                textBoxFinishedCount.Text = "0";
             }
             else
             {
@@ -683,6 +723,7 @@ namespace Timing_Software_ver._3._0
         /// <summary>
         /// Manually simulates either a lap start or lap finish for the current lap,
         /// overriding disqualification and missed-lap checks.
+        /// Also updates the started/finished counters.
         /// </summary>
         private void ManualLapSubmission(string rfid, DataRow runnerData, MySqlConnection connection)
         {
@@ -725,6 +766,10 @@ namespace Timing_Software_ver._3._0
 
                     // Play beep
                     soundPlayer.Play();
+
+                    // Increment "started" count
+                    runnersStartedCurrentLap++;
+                    textBoxStartedCount.Text = runnersStartedCurrentLap.ToString();
                 }
                 else
                 {
@@ -752,6 +797,10 @@ namespace Timing_Software_ver._3._0
 
                     // Play beep
                     soundPlayer.Play();
+
+                    // Increment "finished" count
+                    runnersFinishedCurrentLap++;
+                    textBoxFinishedCount.Text = runnersFinishedCurrentLap.ToString();
                 }
             }
         }

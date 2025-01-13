@@ -26,6 +26,12 @@
         private System.Windows.Forms.TextBox textBoxBibNumber;
         private System.Windows.Forms.Button buttonSubmitLap;
 
+        // NEW: Controls for started/finished counters
+        private System.Windows.Forms.Label labelStarted;
+        private System.Windows.Forms.TextBox textBoxStartedCount;
+        private System.Windows.Forms.Label labelFinished;
+        private System.Windows.Forms.TextBox textBoxFinishedCount;
+
         /// <summary>
         /// Dispose of any resources being used.
         /// </summary>
@@ -65,11 +71,18 @@
             this.textBoxEventId = new System.Windows.Forms.TextBox();
             this.labelEventId = new System.Windows.Forms.Label();
 
-            // ========== NEW CONTROLS FOR MANUAL BIB SUBMISSION ==========
+            // ========== CONTROLS FOR MANUAL BIB SUBMISSION ==========
 
             this.labelBibNumber = new System.Windows.Forms.Label();
             this.textBoxBibNumber = new System.Windows.Forms.TextBox();
             this.buttonSubmitLap = new System.Windows.Forms.Button();
+
+            // ========== NEW CONTROLS FOR STARTED/FINISHED COUNTERS ==========
+
+            this.labelStarted = new System.Windows.Forms.Label();
+            this.textBoxStartedCount = new System.Windows.Forms.TextBox();
+            this.labelFinished = new System.Windows.Forms.Label();
+            this.textBoxFinishedCount = new System.Windows.Forms.TextBox();
 
             // 
             // labelConnectionStatus
@@ -216,11 +229,50 @@
             this.buttonSubmitLap.Text = "Submit Lap";
             this.buttonSubmitLap.UseVisualStyleBackColor = true;
             this.buttonSubmitLap.Click += new System.EventHandler(this.buttonSubmitLap_Click);
+
+            // ========== NEW LABEL/TEXTBOX FOR STARTED COUNTER ==========
+            // labelStarted
+            this.labelStarted.AutoSize = true;
+            this.labelStarted.Location = new System.Drawing.Point(20, 420);
+            this.labelStarted.Name = "labelStarted";
+            this.labelStarted.Size = new System.Drawing.Size(148, 20);
+            this.labelStarted.TabIndex = 16;
+            this.labelStarted.Text = "Runners Started Lap";
+
+            // textBoxStartedCount
+            this.textBoxStartedCount.Location = new System.Drawing.Point(200, 417);
+            this.textBoxStartedCount.Name = "textBoxStartedCount";
+            this.textBoxStartedCount.Size = new System.Drawing.Size(60, 26);
+            this.textBoxStartedCount.TabIndex = 17;
+            this.textBoxStartedCount.ReadOnly = true;
+            this.textBoxStartedCount.BackColor = System.Drawing.Color.LightYellow;
+
+            // ========== NEW LABEL/TEXTBOX FOR FINISHED COUNTER ==========
+            // labelFinished
+            this.labelFinished.AutoSize = true;
+            this.labelFinished.Location = new System.Drawing.Point(20, 460);
+            this.labelFinished.Name = "labelFinished";
+            this.labelFinished.Size = new System.Drawing.Size(153, 20);
+            this.labelFinished.TabIndex = 18;
+            this.labelFinished.Text = "Runners Finished Lap";
+
+            // textBoxFinishedCount
+            this.textBoxFinishedCount.Location = new System.Drawing.Point(200, 457);
+            this.textBoxFinishedCount.Name = "textBoxFinishedCount";
+            this.textBoxFinishedCount.Size = new System.Drawing.Size(60, 26);
+            this.textBoxFinishedCount.TabIndex = 19;
+            this.textBoxFinishedCount.ReadOnly = true;
+            this.textBoxFinishedCount.BackColor = System.Drawing.Color.LightYellow;
+
             // 
             // timetrial (Form settings)
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.ClientSize = new System.Drawing.Size(560, 430);
+            this.ClientSize = new System.Drawing.Size(560, 500);
+            this.Controls.Add(this.labelFinished);
+            this.Controls.Add(this.textBoxFinishedCount);
+            this.Controls.Add(this.labelStarted);
+            this.Controls.Add(this.textBoxStartedCount);
             this.Controls.Add(this.buttonSubmitLap);
             this.Controls.Add(this.textBoxBibNumber);
             this.Controls.Add(this.labelBibNumber);
