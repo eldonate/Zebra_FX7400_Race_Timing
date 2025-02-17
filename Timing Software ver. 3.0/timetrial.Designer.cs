@@ -14,46 +14,48 @@
         private System.Windows.Forms.TextBox textBoxLapNumber;
         private System.Windows.Forms.Label labelLapNumber;
 
-        // Additional controls for remote upload
-        private System.Windows.Forms.Button button3;         // "Upload to Remote" button
-        private System.Windows.Forms.TextBox ReaderPosition; // Reader position TextBox
+        // Controls for remote upload
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.TextBox ReaderPosition;
         private System.Windows.Forms.Label labelReaderPosition;
-        private System.Windows.Forms.TextBox textBoxEventId; // Event ID TextBox
+        private System.Windows.Forms.TextBox textBoxEventId;
         private System.Windows.Forms.Label labelEventId;
 
-        // NEW: Controls for manual bib-based lap submission
+        // Controls for manual bib submission
         private System.Windows.Forms.Label labelBibNumber;
         private System.Windows.Forms.TextBox textBoxBibNumber;
+        private System.Windows.Forms.Label labelManualTime;
+        private System.Windows.Forms.TextBox textBoxManualTime;
         private System.Windows.Forms.Button buttonSubmitLap;
 
-        // NEW: Controls for started/finished counters
+        // Controls for started/finished counters
         private System.Windows.Forms.Label labelStarted;
         private System.Windows.Forms.TextBox textBoxStartedCount;
         private System.Windows.Forms.Label labelFinished;
         private System.Windows.Forms.TextBox textBoxFinishedCount;
 
-        /// <summary>
-        /// Dispose of any resources being used.
-        /// </summary>
+        // Controls for automatic lap increment
+        private System.Windows.Forms.CheckBox checkBoxAutoLap;
+        private System.Windows.Forms.Label labelAutoLap;
+        private System.Windows.Forms.TextBox textBoxAutoLapDuration;
+
+        // NEW: Countdown display label.
+        private System.Windows.Forms.Label labelCountdown;
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
             {
                 components.Dispose();
-                soundPlayer.Dispose(); // Dispose SoundPlayer too, if declared here
             }
             base.Dispose(disposing);
         }
 
-        /// <summary>
-        /// Initializes the form's components.
-        /// </summary>
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
 
-            // ========== EXISTING CONTROLS ==========
-
+            // Existing controls
             this.labelConnectionStatus = new System.Windows.Forms.Label();
             this.SelectFileButton = new System.Windows.Forms.Button();
             this.StartMonitoringButton = new System.Windows.Forms.Button();
@@ -63,26 +65,33 @@
             this.textBoxLapNumber = new System.Windows.Forms.TextBox();
             this.labelLapNumber = new System.Windows.Forms.Label();
 
-            // ========== CONTROLS FOR REMOTE UPLOAD ==========
-
+            // Controls for remote upload
             this.button3 = new System.Windows.Forms.Button();
             this.ReaderPosition = new System.Windows.Forms.TextBox();
             this.labelReaderPosition = new System.Windows.Forms.Label();
             this.textBoxEventId = new System.Windows.Forms.TextBox();
             this.labelEventId = new System.Windows.Forms.Label();
 
-            // ========== CONTROLS FOR MANUAL BIB SUBMISSION ==========
-
+            // Controls for manual bib submission
             this.labelBibNumber = new System.Windows.Forms.Label();
             this.textBoxBibNumber = new System.Windows.Forms.TextBox();
+            this.labelManualTime = new System.Windows.Forms.Label();
+            this.textBoxManualTime = new System.Windows.Forms.TextBox();
             this.buttonSubmitLap = new System.Windows.Forms.Button();
 
-            // ========== NEW CONTROLS FOR STARTED/FINISHED COUNTERS ==========
-
+            // Controls for started/finished counters
             this.labelStarted = new System.Windows.Forms.Label();
             this.textBoxStartedCount = new System.Windows.Forms.TextBox();
             this.labelFinished = new System.Windows.Forms.Label();
             this.textBoxFinishedCount = new System.Windows.Forms.TextBox();
+
+            // Controls for automatic lap increment
+            this.checkBoxAutoLap = new System.Windows.Forms.CheckBox();
+            this.labelAutoLap = new System.Windows.Forms.Label();
+            this.textBoxAutoLapDuration = new System.Windows.Forms.TextBox();
+
+            // NEW: Countdown label.
+            this.labelCountdown = new System.Windows.Forms.Label();
 
             // 
             // labelConnectionStatus
@@ -220,60 +229,120 @@
             this.textBoxBibNumber.Size = new System.Drawing.Size(150, 26);
             this.textBoxBibNumber.TabIndex = 14;
             // 
+            // labelManualTime
+            // 
+            this.labelManualTime.AutoSize = true;
+            this.labelManualTime.Location = new System.Drawing.Point(20, 410);
+            this.labelManualTime.Name = "labelManualTime";
+            this.labelManualTime.Size = new System.Drawing.Size(101, 20);
+            this.labelManualTime.TabIndex = 15;
+            this.labelManualTime.Text = "Manual Time";
+            // 
+            // textBoxManualTime
+            // 
+            this.textBoxManualTime.Location = new System.Drawing.Point(150, 407);
+            this.textBoxManualTime.Name = "textBoxManualTime";
+            this.textBoxManualTime.Size = new System.Drawing.Size(150, 26);
+            this.textBoxManualTime.TabIndex = 16;
+            // 
             // buttonSubmitLap
             // 
-            this.buttonSubmitLap.Location = new System.Drawing.Point(320, 360);
+            this.buttonSubmitLap.Location = new System.Drawing.Point(320, 380);
             this.buttonSubmitLap.Name = "buttonSubmitLap";
             this.buttonSubmitLap.Size = new System.Drawing.Size(150, 40);
-            this.buttonSubmitLap.TabIndex = 15;
+            this.buttonSubmitLap.TabIndex = 17;
             this.buttonSubmitLap.Text = "Submit Lap";
             this.buttonSubmitLap.UseVisualStyleBackColor = true;
             this.buttonSubmitLap.Click += new System.EventHandler(this.buttonSubmitLap_Click);
-
-            // ========== NEW LABEL/TEXTBOX FOR STARTED COUNTER ==========
+            // 
             // labelStarted
+            // 
             this.labelStarted.AutoSize = true;
-            this.labelStarted.Location = new System.Drawing.Point(20, 420);
+            this.labelStarted.Location = new System.Drawing.Point(20, 450);
             this.labelStarted.Name = "labelStarted";
             this.labelStarted.Size = new System.Drawing.Size(148, 20);
-            this.labelStarted.TabIndex = 16;
+            this.labelStarted.TabIndex = 18;
             this.labelStarted.Text = "Runners Started Lap";
-
+            // 
             // textBoxStartedCount
-            this.textBoxStartedCount.Location = new System.Drawing.Point(200, 417);
+            // 
+            this.textBoxStartedCount.Location = new System.Drawing.Point(200, 447);
             this.textBoxStartedCount.Name = "textBoxStartedCount";
             this.textBoxStartedCount.Size = new System.Drawing.Size(60, 26);
-            this.textBoxStartedCount.TabIndex = 17;
+            this.textBoxStartedCount.TabIndex = 19;
             this.textBoxStartedCount.ReadOnly = true;
             this.textBoxStartedCount.BackColor = System.Drawing.Color.LightYellow;
-
-            // ========== NEW LABEL/TEXTBOX FOR FINISHED COUNTER ==========
+            // 
             // labelFinished
+            // 
             this.labelFinished.AutoSize = true;
-            this.labelFinished.Location = new System.Drawing.Point(20, 460);
+            this.labelFinished.Location = new System.Drawing.Point(20, 490);
             this.labelFinished.Name = "labelFinished";
             this.labelFinished.Size = new System.Drawing.Size(153, 20);
-            this.labelFinished.TabIndex = 18;
+            this.labelFinished.TabIndex = 20;
             this.labelFinished.Text = "Runners Finished Lap";
-
+            // 
             // textBoxFinishedCount
-            this.textBoxFinishedCount.Location = new System.Drawing.Point(200, 457);
+            // 
+            this.textBoxFinishedCount.Location = new System.Drawing.Point(200, 487);
             this.textBoxFinishedCount.Name = "textBoxFinishedCount";
             this.textBoxFinishedCount.Size = new System.Drawing.Size(60, 26);
-            this.textBoxFinishedCount.TabIndex = 19;
+            this.textBoxFinishedCount.TabIndex = 21;
             this.textBoxFinishedCount.ReadOnly = true;
             this.textBoxFinishedCount.BackColor = System.Drawing.Color.LightYellow;
-
+            // 
+            // checkBoxAutoLap
+            // 
+            this.checkBoxAutoLap.AutoSize = true;
+            this.checkBoxAutoLap.Location = new System.Drawing.Point(20, 530);
+            this.checkBoxAutoLap.Name = "checkBoxAutoLap";
+            this.checkBoxAutoLap.Size = new System.Drawing.Size(20, 19);
+            this.checkBoxAutoLap.TabIndex = 22;
+            this.checkBoxAutoLap.UseVisualStyleBackColor = true;
+            this.checkBoxAutoLap.CheckedChanged += new System.EventHandler(this.checkBoxAutoLap_CheckedChanged);
+            // 
+            // labelAutoLap
+            // 
+            this.labelAutoLap.AutoSize = true;
+            this.labelAutoLap.Location = new System.Drawing.Point(50, 530);
+            this.labelAutoLap.Name = "labelAutoLap";
+            this.labelAutoLap.Size = new System.Drawing.Size(165, 20);
+            this.labelAutoLap.TabIndex = 23;
+            this.labelAutoLap.Text = "Enable Auto Lap Increment";
+            // 
+            // textBoxAutoLapDuration
+            // 
+            this.textBoxAutoLapDuration.Location = new System.Drawing.Point(230, 527);
+            this.textBoxAutoLapDuration.Name = "textBoxAutoLapDuration";
+            this.textBoxAutoLapDuration.Size = new System.Drawing.Size(60, 26);
+            this.textBoxAutoLapDuration.TabIndex = 24;
+            this.textBoxAutoLapDuration.Text = "60";
+            // 
+            // labelCountdown (NEW)
+            // 
+            this.labelCountdown.AutoSize = true;
+            this.labelCountdown.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold);
+            this.labelCountdown.Location = new System.Drawing.Point(320, 530);
+            this.labelCountdown.Name = "labelCountdown";
+            this.labelCountdown.Size = new System.Drawing.Size(190, 25);
+            this.labelCountdown.TabIndex = 25;
+            this.labelCountdown.Text = "Countdown: 00:00";
             // 
             // timetrial (Form settings)
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.ClientSize = new System.Drawing.Size(560, 500);
+            this.ClientSize = new System.Drawing.Size(560, 600);
+            this.Controls.Add(this.labelCountdown);
+            this.Controls.Add(this.textBoxAutoLapDuration);
+            this.Controls.Add(this.labelAutoLap);
+            this.Controls.Add(this.checkBoxAutoLap);
             this.Controls.Add(this.labelFinished);
             this.Controls.Add(this.textBoxFinishedCount);
             this.Controls.Add(this.labelStarted);
             this.Controls.Add(this.textBoxStartedCount);
             this.Controls.Add(this.buttonSubmitLap);
+            this.Controls.Add(this.textBoxManualTime);
+            this.Controls.Add(this.labelManualTime);
             this.Controls.Add(this.textBoxBibNumber);
             this.Controls.Add(this.labelBibNumber);
             this.Controls.Add(this.textBoxEventId);
