@@ -38,16 +38,21 @@
             this.ReaderPosition = new System.Windows.Forms.TextBox();
             this.chkAutoUpload = new System.Windows.Forms.CheckBox();
             this.txtUploadInterval = new System.Windows.Forms.TextBox();
+            this.lblLastPush = new System.Windows.Forms.Label();
+            this.cmbCategories = new System.Windows.Forms.ComboBox();
+            this.dgvTopRunners = new System.Windows.Forms.DataGridView();
+            this.btnRefresh = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvTopRunners)).BeginInit();
             this.SuspendLayout();
             // 
             // dataGridView1
             // 
             this.dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(12, 359);
+            this.dataGridView1.Location = new System.Drawing.Point(12, 403);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(982, 91);
+            this.dataGridView1.Size = new System.Drawing.Size(982, 47);
             this.dataGridView1.TabIndex = 0;
             // 
             // btnSelectFile
@@ -232,9 +237,51 @@
             this.txtUploadInterval.TabIndex = 19;
             this.txtUploadInterval.Text = "5";
             // 
+            // lblLastPush
+            // 
+            this.lblLastPush.AutoSize = true;
+            this.lblLastPush.Location = new System.Drawing.Point(809, 76);
+            this.lblLastPush.Name = "lblLastPush";
+            this.lblLastPush.Size = new System.Drawing.Size(54, 13);
+            this.lblLastPush.TabIndex = 20;
+            this.lblLastPush.Text = "Last Push";
+            // 
+            // cmbCategories
+            // 
+            this.cmbCategories.FormattingEnabled = true;
+            this.cmbCategories.Location = new System.Drawing.Point(24, 212);
+            this.cmbCategories.Name = "cmbCategories";
+            this.cmbCategories.Size = new System.Drawing.Size(121, 21);
+            this.cmbCategories.TabIndex = 21;
+            this.cmbCategories.SelectedIndexChanged += new System.EventHandler(this.cmbCategories_SelectedIndexChanged);
+            // 
+            // dgvTopRunners
+            // 
+            this.dgvTopRunners.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
+            this.dgvTopRunners.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            this.dgvTopRunners.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvTopRunners.Location = new System.Drawing.Point(154, 212);
+            this.dgvTopRunners.Name = "dgvTopRunners";
+            this.dgvTopRunners.Size = new System.Drawing.Size(840, 168);
+            this.dgvTopRunners.TabIndex = 22;
+            // 
+            // btnRefresh
+            // 
+            this.btnRefresh.Location = new System.Drawing.Point(24, 239);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(75, 23);
+            this.btnRefresh.TabIndex = 23;
+            this.btnRefresh.Text = "Refresh";
+            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            // 
             // reading
             // 
             this.ClientSize = new System.Drawing.Size(1006, 461);
+            this.Controls.Add(this.btnRefresh);
+            this.Controls.Add(this.dgvTopRunners);
+            this.Controls.Add(this.cmbCategories);
+            this.Controls.Add(this.lblLastPush);
             this.Controls.Add(this.txtUploadInterval);
             this.Controls.Add(this.chkAutoUpload);
             this.Controls.Add(this.ReaderPosition);
@@ -258,6 +305,7 @@
             this.Name = "reading";
             this.Text = "Race Manager";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvTopRunners)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -287,5 +335,9 @@
         private System.Windows.Forms.TextBox ReaderPosition;
         private System.Windows.Forms.CheckBox chkAutoUpload;
         private System.Windows.Forms.TextBox txtUploadInterval;
+        private System.Windows.Forms.Label lblLastPush;
+        private System.Windows.Forms.ComboBox cmbCategories;
+        private System.Windows.Forms.DataGridView dgvTopRunners;
+        private System.Windows.Forms.Button btnRefresh;
     }
 }

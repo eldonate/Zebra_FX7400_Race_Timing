@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 using System.Collections.Concurrent;
 using System.Threading;
+using Mysqlx.Crud;
 
 namespace RaceManager
 {
@@ -42,11 +43,11 @@ namespace RaceManager
         public reading()
         {
             InitializeComponent();
-
+            
             // Build connection string (with pooling enabled)
             connectionString = GetConnectionString("../../../../dbconfig.txt", false);
             soundPlayer = new SoundPlayer("../../../../beep.wav");
-
+            LoadCategories();
             // Initialize in-memory dictionaries and queue.
             lastReadTimes = new Dictionary<string, DateTime>();
             remainingLaps = new Dictionary<string, int>();
@@ -76,6 +77,7 @@ namespace RaceManager
             // Initialize remote upload timer (UI timer) for auto-upload.
             uploadTimer = new System.Windows.Forms.Timer();
             uploadTimer.Tick += UploadTimer_Tick;
+
         }
 
         #region Connection and Caching
@@ -749,9 +751,21 @@ namespace RaceManager
         }
 
         // button3_Click: Manual push to remote.
-        private void button3_Click(object sender, EventArgs e)
+        private async void button3_Click(object sender, EventArgs e)
         {
-            Task.Run(() => PushDataToRemote());
+            publishtoremote.Enabled = false;
+            try
+            {
+                await Task.Run(() => PushDataToRemote());
+            }
+            catch (Exception ex)
+            {
+                // Log error if needed
+            }
+            finally
+            {
+                publishtoremote.Enabled = true;
+            }
         }
 
         // Optimized: Pushes data from the local results table to the remote DB.
@@ -876,6 +890,10 @@ namespace RaceManager
                                 }
                             }
                             transaction.Commit();
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                lblLastPush.Text = $"Last Push: {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+                            });
                         }
                     }
                 }
@@ -981,6 +999,31 @@ namespace RaceManager
             }
         }
 
+        private void LoadCategories()
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    var cmd = new MySqlCommand(
+                        "SELECT 'None' AS name UNION ALL SELECT name FROM categories", conn);
+
+                    var adapter = new MySqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    cmbCategories.DisplayMember = "name";
+                    cmbCategories.ValueMember = "name";
+                    cmbCategories.DataSource = dt;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading categories: " + ex.Message);
+            }
+        }
+
         private void LoadEvents()
         {
             string connectionStringRemote = GetConnectionString("../../../../dbconfig.txt", true);
@@ -1005,7 +1048,60 @@ namespace RaceManager
                 MessageBox.Show("Error loading events: " + ex.Message);
             }
         }
+        private void LoadTopRunners()
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string selectedCategory = cmbCategories.SelectedValue?.ToString();
 
+                    string query = @"(SELECT bib, first_name, last_name, elapsed_time, gender, position, category_position,gender_position
+                           FROM results 
+                           WHERE gender = 'Male' AND ";
+
+                    if (selectedCategory == "None")
+                    {
+                        query += @"(position BETWEEN 1 AND 3) 
+                         ORDER BY position LIMIT 3)
+                         UNION ALL
+                         (SELECT bib, first_name, last_name, elapsed_time, gender, position, category_position,gender_position
+                          FROM results 
+                          WHERE gender = 'Female' 
+                          AND (position BETWEEN 1 AND 3) 
+                          ORDER BY position LIMIT 3)";
+                    }
+                    else
+                    {
+                        query += @"category = @category 
+                          AND (category_position BETWEEN 1 AND 3)
+                          ORDER BY category_position LIMIT 3)
+                          UNION ALL
+                          (SELECT bib, first_name, last_name, elapsed_time, gender, position, category_position,gender_position 
+                           FROM results 
+                           WHERE gender = 'Female' 
+                           AND category = @category 
+                           AND (category_position BETWEEN 1 AND 3) 
+                           ORDER BY category_position LIMIT 3)";
+                    }
+
+                    var cmd = new MySqlCommand(query, conn);
+                    if (selectedCategory != "None")
+                        cmd.Parameters.AddWithValue("@category", selectedCategory);
+
+                    var adapter = new MySqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    dgvTopRunners.DataSource = dt;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading top runners: " + ex.Message);
+            }
+        }
 
         #endregion
 
@@ -1080,7 +1176,16 @@ namespace RaceManager
             public string Team { get; set; }
             public bool IsFinish { get; set; }
         }
-
         #endregion
+
+        private void cmbCategories_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            LoadTopRunners();
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            LoadTopRunners();
+        }
     }
 }
